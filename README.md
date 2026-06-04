@@ -85,7 +85,7 @@ Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## ❤️ Support
 
-Cadence is free and open-source. If it saves you time, you can **[buy me a coffee](https://buymeacoffee.com/bykcyc)** ☕ — it directly supports development.
+Cadence is free and open-source. If it saves you time, you can **[buy me a coffee](https://buymeacoffee.com/bykcycd)** ☕ — it directly supports development.
 
 ## 📄 License
 
