@@ -1,8 +1,8 @@
 {
   "name": "transcriber",
   "version": "0.1.0",
-  "description": "Фоновый рекордер встреч с локальной транскрипцией, диаризацией и meeting notes",
-  "author": "Transcriber",
+  "description": "Cadence — private, local-first meeting recorder, transcription, dictation & read-aloud for Windows.",
+  "author": "Jurijs Ivanenko",
   "license": "MIT",
   "main": "./out/main/index.js",
   "scripts": {
@@ -12,6 +12,8 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build:win": "electron-vite build && electron-builder --win",
     "pack:dir": "electron-vite build && electron-builder --win --dir"
   },
@@ -42,6 +44,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^2.1.9"
   }
 }

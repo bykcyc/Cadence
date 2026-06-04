@@ -295,6 +295,16 @@ const en: Dict = {
   'field.support': 'Support the project',
   'btn.support': '❤ Donate',
   'support.tooltip': 'Support development — Buy Me a Coffee ☕',
+  'onboarding.title': 'Welcome to Cadence',
+  'onboarding.intro':
+    'Record meetings, transcribe and separate speakers locally, get AI notes, dictate by voice and have text read aloud.',
+  'onboarding.tip1':
+    'On your first transcription, Cadence sets up its local engine automatically (a one-time ~2–4 GB download; an NVIDIA GPU is strongly recommended).',
+  'onboarding.tip2':
+    'For AI notes and the “dictation + DeepSeek/translate” modes, add an API key in Settings → LLM provider.',
+  'onboarding.tip3':
+    'For speaker separation, add a Hugging Face token in Settings and accept the pyannote model licenses.',
+  'onboarding.cta': 'Get started',
   'tray.start': 'Start recording',
   'tray.stop': 'Stop recording',
   'tray.open': 'Open app',
@@ -312,6 +322,8 @@ const en: Dict = {
   'dictation.empty': 'Empty',
   'dictation.inClipboard': 'Copied to clipboard',
   'ml.installUv': 'Installing the uv package manager…',
+  'ml.lowDisk': 'Not enough free disk space — the speech engine needs about 8 GB.',
+  'ml.cpuWarning': 'No NVIDIA GPU detected — transcription runs on the CPU and will be slow.',
   'ml.creatingEnv': 'Creating the Python environment…',
   'ml.installTorch': 'Installing PyTorch (CUDA) — this is a large download…',
   'ml.installDeps': 'Installing NeMo / pyannote / dependencies…',
@@ -483,6 +495,16 @@ const ru: Dict = {
   'field.support': 'Поддержать проект',
   'btn.support': '❤ Поддержать проект',
   'support.tooltip': 'Поддержать разработку — Buy Me a Coffee ☕',
+  'onboarding.title': 'Добро пожаловать в Cadence',
+  'onboarding.intro':
+    'Записывайте встречи, локально расшифровывайте и разделяйте по говорящим, делайте AI-заметки, диктуйте голосом и озвучивайте текст.',
+  'onboarding.tip1':
+    'При первой транскрипции Cadence сам настроит локальный движок (разовая загрузка ~2–4 ГБ; крайне желательна видеокарта NVIDIA).',
+  'onboarding.tip2':
+    'Для AI-заметок и режимов «диктовка + DeepSeek/перевод» впишите API-ключ в Настройки → LLM-провайдер.',
+  'onboarding.tip3':
+    'Для разделения по говорящим добавьте токен Hugging Face в настройках и примите лицензии моделей pyannote.',
+  'onboarding.cta': 'Начать',
   'tray.start': 'Начать запись',
   'tray.stop': 'Остановить запись',
   'tray.open': 'Открыть приложение',
@@ -500,6 +522,8 @@ const ru: Dict = {
   'dictation.empty': 'Пусто',
   'dictation.inClipboard': 'В буфере',
   'ml.installUv': 'Установка пакетного менеджера uv…',
+  'ml.lowDisk': 'Недостаточно места на диске — движку распознавания нужно ~8 ГБ.',
+  'ml.cpuWarning': 'GPU NVIDIA не обнаружена — распознавание идёт на CPU и будет медленным.',
   'ml.creatingEnv': 'Создание Python-окружения…',
   'ml.installTorch': 'Установка PyTorch (CUDA) — это крупная загрузка…',
   'ml.installDeps': 'Установка NeMo / pyannote / зависимостей…',

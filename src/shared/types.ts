@@ -93,6 +93,8 @@ export interface AppSettings {
   // External integration (iteration 4): local HTTP API for task-bots.
   localApiEnabled: boolean
   localApiPort: number
+  // First-run welcome shown until dismissed.
+  onboardingDone: boolean
 }
 
 export type NotesProvider = 'deepseek' | 'openrouter' | 'mistral'

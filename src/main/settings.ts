@@ -69,7 +69,8 @@ export function initSettings(): void {
       ttsVoice: 'ru-RU-SvetlanaNeural',
       ttsSpeed: 1.0,
       localApiEnabled: true,
-      localApiPort: 47800
+      localApiPort: 47800,
+      onboardingDone: false
     }
   })
 }

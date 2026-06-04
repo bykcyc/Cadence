@@ -1,6 +1,7 @@
 import { app } from 'electron'
 import { spawn, type ChildProcess } from 'node:child_process'
 import { existsSync } from 'node:fs'
+import { statfs } from 'node:fs/promises'
 import { join } from 'node:path'
 import { createServer } from 'node:net'
 import { IPC } from '@shared/ipc'
@@ -118,12 +119,13 @@ function canRun(cmd: string): Promise<boolean> {
 /** Returns a usable `uv` command, installing it via the official standalone installer
  *  (no admin needed) if it isn't already on PATH. Lets the app set up the ML env on a
  *  fresh machine that doesn't have uv. */
-async function ensureUv(): Promise<string> {
+async function ensureUv(silent = false): Promise<string> {
   if (uvCmd) return uvCmd
   if (await canRun('uv')) return (uvCmd = 'uv')
   const local = join(app.getPath('home'), '.local', 'bin', 'uv.exe')
   if (existsSync(local)) return (uvCmd = local)
-  setState({ status: 'setup', message: mt('ml.installUv'), progress: 0.02 })
+  // `silent` = called from the lightweight TTS path; don't touch the heavy ML engine banner.
+  if (!silent) setState({ status: 'setup', message: mt('ml.installUv'), progress: 0.02 })
   await run(
     'powershell',
     [
@@ -133,14 +135,71 @@ async function ensureUv(): Promise<string> {
       '-Command',
       'irm https://astral.sh/uv/install.ps1 | iex'
     ],
-    (l) => setState({ message: l.slice(0, 120) })
+    (l) => {
+      if (!silent) setState({ message: l.slice(0, 120) })
+    }
   )
   if (existsSync(local)) return (uvCmd = local)
   if (await canRun('uv')) return (uvCmd = 'uv')
   throw new Error('uv installation failed')
 }
 
+function ttsVenvDir(): string {
+  return join(app.getPath('userData'), 'tts-venv')
+}
+
+function canImport(py: string, moduleName: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const c = spawn(py, ['-c', `import ${moduleName}`], { windowsHide: true })
+      c.on('error', () => resolve(false))
+      c.on('close', (code) => resolve(code === 0))
+    } catch {
+      resolve(false)
+    }
+  })
+}
+
+let ttsPyPromise: Promise<string> | null = null
+
+/** A Python interpreter that has `edge-tts`, for read-aloud. Reuses the full ML venv when it
+ *  already has edge-tts; otherwise creates a tiny dedicated venv (no torch/NeMo) so read-aloud
+ *  works without the heavy ML setup. The in-flight promise is cached so the startup prewarm and a
+ *  concurrent hotkey press can't both create/install the venv at once (a venv-corrupting race). */
+export function ensureTtsPython(): Promise<string> {
+  if (ttsPyPromise) return ttsPyPromise
+  ttsPyPromise = (async () => {
+    const heavy = findVenvPython()
+    if (heavy && (await canImport(heavy, 'edge_tts'))) return heavy
+    const venv = ttsVenvDir()
+    const py = join(venv, 'Scripts', 'python.exe')
+    if (existsSync(py) && (await canImport(py, 'edge_tts'))) return py
+    const uv = await ensureUv(true) // silent: don't touch the heavy ML banner
+    await run(uv, ['venv', '--python', '3.12', venv], () => {})
+    await run(uv, ['pip', 'install', '--python', py, 'edge-tts==7.2.8'], () => {})
+    return py
+  })()
+  // On failure, clear the cache so a later call can retry (e.g. transient network error).
+  ttsPyPromise.catch(() => {
+    ttsPyPromise = null
+  })
+  return ttsPyPromise
+}
+
+/** Abort setup early with a clear message if the disk is too small for the ~8 GB ML stack. */
+async function assertEnoughDisk(): Promise<void> {
+  let freeGb = Infinity
+  try {
+    const st = await statfs(app.getPath('userData'))
+    freeGb = (st.bavail * st.bsize) / 1e9
+  } catch {
+    /* statfs unavailable — skip the check rather than block setup */
+  }
+  if (freeGb < 6) throw new Error(mt('ml.lowDisk'))
+}
+
 async function runSetup(): Promise<string> {
+  await assertEnoughDisk()
   const uv = await ensureUv()
   setState({ status: 'setup', message: mt('ml.creatingEnv'), progress: 0.05 })
   const venv = userVenvDir()

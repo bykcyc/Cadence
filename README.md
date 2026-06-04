@@ -22,6 +22,11 @@ and speaker separation entirely on your machine** — nothing leaves your comput
 turn on an optional cloud feature (AI notes / read-aloud). It captures **your microphone and
 the meeting audio as separate tracks**, so "you vs. them" is perfectly split before any AI runs.
 
+## 📸 Screenshots
+
+<!-- Add screenshots/GIFs here, e.g. ![Recordings](docs/recordings.png) ![Settings](docs/settings.png) -->
+_Screenshots coming soon._
+
 ## ✨ Features
 
 - **🎙️ Dual-track recording** — your mic and the meeting/system audio recorded separately (FLAC), plus a mixed track for playback. No virtual cable needed (WASAPI loopback).
@@ -78,6 +83,14 @@ npm run build:win    # NSIS installer + portable .exe in dist/
 Electron + React + TypeScript + Tailwind (electron-vite, electron-builder) · NVIDIA Parakeet TDT v3
 (NeMo) · pyannote.audio · FastAPI worker · `edge-tts` · `uiohook-napi` (global hotkeys) ·
 `ffmpeg-static`.
+
+## ⚖️ Models & third-party services
+
+- **Parakeet TDT v3** (ASR) and **pyannote** (diarization) are downloaded from Hugging Face on first use. pyannote models are **gated** — you must accept their licenses on huggingface.co and use a read token.
+- **Read-aloud** uses Microsoft **Edge** online neural voices via the community `edge-tts` client (intended for personal use; subject to Microsoft's terms).
+- **Meeting notes / dictation polish & translate** call the LLM provider you configure (DeepSeek by default) with your own API key.
+
+Cadence itself is MIT-licensed; the models and services above keep their own licenses/terms.
 
 ## 🤝 Contributing
 

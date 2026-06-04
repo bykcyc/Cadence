@@ -589,18 +589,28 @@ function NotesSection({ meeting }: { meeting: Meeting }): ReactNode {
 
 function MlBanner(): ReactNode {
   const { ml, t } = useApp()
-  if (ml.status !== 'setup' && ml.status !== 'starting') return null
-  return (
-    <div className="mb-4 flex items-center gap-3 rounded-xl bg-accent-50 px-4 py-3 text-sm text-accent-700 dark:bg-accent-500/15 dark:text-accent-100">
-      <Spinner />
-      <div className="min-w-0">
-        <div className="font-medium">
-          {ml.status === 'setup' ? t('ml.preparing') : t('ml.starting')}
+  if (ml.status === 'setup' || ml.status === 'starting') {
+    return (
+      <div className="mb-4 flex items-center gap-3 rounded-xl bg-accent-50 px-4 py-3 text-sm text-accent-700 dark:bg-accent-500/15 dark:text-accent-100">
+        <Spinner />
+        <div className="min-w-0">
+          <div className="font-medium">
+            {ml.status === 'setup' ? t('ml.preparing') : t('ml.starting')}
+          </div>
+          <div className="truncate text-xs opacity-80">{ml.message}</div>
         </div>
-        <div className="truncate text-xs opacity-80">{ml.message}</div>
       </div>
-    </div>
-  )
+    )
+  }
+  if (ml.status === 'ready' && ml.device === 'cpu') {
+    return (
+      <div className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
+        <AlertCircle className="h-4 w-4 shrink-0" />
+        <span>{t('ml.cpuWarning')}</span>
+      </div>
+    )
+  }
+  return null
 }
 
 function SpeakerChips({ meeting, speakers }: { meeting: Meeting; speakers: string[] }): ReactNode {

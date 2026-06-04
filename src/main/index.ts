@@ -21,6 +21,7 @@ import { startLocalApi, stopLocalApi } from './local-api'
 import { initHistory } from './dictation-history'
 import { registerDictation, stopDictation } from './dictation'
 import { registerTts } from './tts'
+import { ensureTtsPython } from './ml-manager'
 import { destroyOverlay } from './overlay'
 import { initLogger } from './logger'
 
@@ -131,6 +132,8 @@ if (!gotLock) {
       startLocalApi()
       registerTts() // TTS playback-ended IPC; hotkey bindings applied via dictation manager
       registerDictation() // starts the global key hook; bindings active only if enabled
+      // Pre-warm the lightweight read-aloud engine in the background so the first use is fast.
+      if (getSettings().ttsEnabled) void ensureTtsPython().catch(() => {})
     }
 
     const launchedHidden = process.argv.includes('--hidden')
