@@ -34,6 +34,11 @@ jobs:
         with:
           node-version: 20
           cache: npm
+      # electron-builder rebuilds the native uiohook-napi module with node-gyp, which needs
+      # distutils — removed from Python 3.12 (the runner default). Pin 3.11 so the rebuild works.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - run: npm ci
       - name: Build Windows installer + portable
         # `--publish never` stops electron-builder from auto-publishing to a GitHub Release on a
