@@ -40,9 +40,25 @@ jobs:
         # tag build (its default when a token is present); the softprops step below is the single
         # uploader. No GH_TOKEN here on purpose — building needs no token.
         run: npm run build:win -- --publish never
-      - name: Attach artifacts to the release
+      - name: Publish release with artifacts
         uses: softprops/action-gh-release@v2
         with:
+          name: Cadence ${{ github.ref_name }}
+          body: |
+            **Cadence** — a private, local-first meeting recorder, transcriber & voice toolkit for Windows.
+
+            ### Downloads
+            - **Cadence-Setup-x.y.z.exe** — installer (recommended)
+            - **Cadence-x.y.z-portable.exe** — no-install single executable
+
+            ### First run
+            On the first transcription, Cadence sets up its local engine automatically (installs `uv`,
+            a Python environment, PyTorch + the models). An **NVIDIA GPU is recommended** — it falls
+            back to CPU, which works but is slow. For AI notes / dictation polish & translate you add
+            your own API key; speaker diarization needs a free Hugging Face token.
+
+            > The build is **unsigned**, so Windows SmartScreen may warn on first launch →
+            > **More info → Run anyway**.
           files: |
             dist/Cadence-Setup-*.exe
             dist/Cadence-*-portable.exe
