@@ -1,0 +1,47 @@
+{
+  "name": "transcriber",
+  "version": "0.1.0",
+  "description": "Фоновый рекордер встреч с локальной транскрипцией, диаризацией и meeting notes",
+  "author": "Transcriber",
+  "license": "MIT",
+  "main": "./out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "start": "electron-vite preview",
+    "build": "electron-vite build",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json --composite false",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "build:win": "electron-vite build && electron-builder --win",
+    "pack:dir": "electron-vite build && electron-builder --win --dir"
+  },
+  "dependencies": {
+    "@electron-toolkit/utils": "^4.0.0",
+    "chokidar": "^3.6.0",
+    "electron-audio-loopback": "^1.0.5",
+    "electron-store": "^8.2.0",
+    "ffmpeg-static": "^5.2.0",
+    "fluent-ffmpeg": "^2.1.3",
+    "uiohook-napi": "^1.5.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/fluent-ffmpeg": "^2.1.27",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "clsx": "^2.1.1",
+    "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
+    "electron-vite": "^2.3.0",
+    "framer-motion": "^11.15.0",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "tailwind-merge": "^2.5.5",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  }
+}

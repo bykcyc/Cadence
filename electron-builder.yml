@@ -1,0 +1,60 @@
+appId: com.cadence.app
+productName: Cadence
+copyright: Copyright © 2026
+
+directories:
+  output: dist
+  buildResources: build
+
+files:
+  - out/**
+  - package.json
+  - '!**/*.{map,md,ts}'
+  - '!**/{.eslintrc,.prettierrc,tsconfig.json}'
+  # ffmpeg binary is shipped via extraResources instead (keeps the asar small).
+  - '!**/node_modules/ffmpeg-static/ffmpeg.exe'
+
+# Native global-hotkey module must be unpacked from the asar to load.
+asarUnpack:
+  - '**/node_modules/uiohook-napi/**'
+
+extraResources:
+  # ffmpeg as a plain resource (resources/ffmpeg.exe) — reliable in installer + portable.
+  - from: node_modules/ffmpeg-static/ffmpeg.exe
+    to: ffmpeg.exe
+  # Local ML worker (NOT the multi-GB venv — created on first run via uv).
+  - from: ml
+    to: ml
+    filter:
+      - worker.py
+      - requirements.txt
+  # Tray + window icons loaded by absolute path at runtime.
+  - from: resources/tray-idle.png
+    to: tray-idle.png
+  - from: resources/tray-recording.png
+    to: tray-recording.png
+  - from: resources/icon.png
+    to: icon.png
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  icon: resources/icon.png
+  artifactName: ${productName}-${version}-${arch}.${ext}
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Transcriber
+  artifactName: ${productName}-Setup-${version}.${ext}
+
+portable:
+  artifactName: ${productName}-${version}-portable.${ext}

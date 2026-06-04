@@ -1,0 +1,279 @@
+import { app } from 'electron'
+import { spawn, type ChildProcess } from 'node:child_process'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
+import { createServer } from 'node:net'
+import { IPC } from '@shared/ipc'
+import type { MlState } from '@shared/types'
+import { broadcast } from './broadcast'
+import { getSettings } from './settings'
+import { log } from './logger'
+import { mt } from './i18n'
+
+const PYTORCH_INDEX = 'https://download.pytorch.org/whl/cu124'
+
+let state: MlState = { status: 'idle', message: '', device: null, progress: null }
+let proc: ChildProcess | null = null
+let port = 0
+let readyPromise: Promise<string> | null = null
+
+function setState(patch: Partial<MlState>): void {
+  state = { ...state, ...patch }
+  broadcast(IPC.mlStatusEvent, state)
+}
+
+export function getMlState(): MlState {
+  return state
+}
+
+function mlSrcDir(): string {
+  return app.isPackaged ? join(process.resourcesPath, 'ml') : join(app.getAppPath(), 'ml')
+}
+
+function workerScript(): string {
+  return join(mlSrcDir(), 'worker.py')
+}
+
+function requirementsFile(): string {
+  return join(mlSrcDir(), 'requirements.txt')
+}
+
+/** venv python, in priority order:
+ *  1) explicit override from settings
+ *  2) in-tree dev venv (npm run dev)
+ *  3) the conventional project venv under Documents (reuses a prepared env)
+ *  4) the writable user-data venv (created by setup) */
+function venvPythonCandidates(): string[] {
+  const override = getSettings().mlPythonPath
+  const documentsVenv = join(
+    app.getPath('documents'),
+    'AiProgramming',
+    'Transcriber',
+    'ml',
+    '.venv',
+    'Scripts',
+    'python.exe'
+  )
+  return [
+    ...(override ? [override] : []),
+    join(mlSrcDir(), '.venv', 'Scripts', 'python.exe'),
+    documentsVenv,
+    join(app.getPath('userData'), 'ml-venv', 'Scripts', 'python.exe')
+  ]
+}
+
+export function findVenvPython(): string | null {
+  return venvPythonCandidates().find((p) => existsSync(p)) ?? null
+}
+
+function userVenvDir(): string {
+  return join(app.getPath('userData'), 'ml-venv')
+}
+
+function getFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const srv = createServer()
+    srv.unref()
+    srv.on('error', reject)
+    srv.listen(0, '127.0.0.1', () => {
+      const addr = srv.address()
+      const p = typeof addr === 'object' && addr ? addr.port : 0
+      srv.close(() => resolve(p))
+    })
+  })
+}
+
+function run(cmd: string, args: string[], onLine: (line: string) => void): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const child = spawn(cmd, args, { windowsHide: true })
+    const handle = (buf: Buffer): void => {
+      for (const line of buf.toString().split(/\r?\n/)) {
+        const t = line.trim()
+        if (t) onLine(t)
+      }
+    }
+    child.stdout?.on('data', handle)
+    child.stderr?.on('data', handle)
+    child.on('error', reject)
+    child.on('close', (code) =>
+      code === 0 ? resolve() : reject(new Error(`${cmd} exited with code ${code}`))
+    )
+  })
+}
+
+let uvCmd: string | null = null
+
+function canRun(cmd: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      const c = spawn(cmd, ['--version'], { windowsHide: true })
+      c.on('error', () => resolve(false))
+      c.on('close', (code) => resolve(code === 0))
+    } catch {
+      resolve(false)
+    }
+  })
+}
+
+/** Returns a usable `uv` command, installing it via the official standalone installer
+ *  (no admin needed) if it isn't already on PATH. Lets the app set up the ML env on a
+ *  fresh machine that doesn't have uv. */
+async function ensureUv(): Promise<string> {
+  if (uvCmd) return uvCmd
+  if (await canRun('uv')) return (uvCmd = 'uv')
+  const local = join(app.getPath('home'), '.local', 'bin', 'uv.exe')
+  if (existsSync(local)) return (uvCmd = local)
+  setState({ status: 'setup', message: mt('ml.installUv'), progress: 0.02 })
+  await run(
+    'powershell',
+    [
+      '-NoProfile',
+      '-ExecutionPolicy',
+      'Bypass',
+      '-Command',
+      'irm https://astral.sh/uv/install.ps1 | iex'
+    ],
+    (l) => setState({ message: l.slice(0, 120) })
+  )
+  if (existsSync(local)) return (uvCmd = local)
+  if (await canRun('uv')) return (uvCmd = 'uv')
+  throw new Error('uv installation failed')
+}
+
+async function runSetup(): Promise<string> {
+  const uv = await ensureUv()
+  setState({ status: 'setup', message: mt('ml.creatingEnv'), progress: 0.05 })
+  const venv = userVenvDir()
+  const python = join(venv, 'Scripts', 'python.exe')
+
+  // 1) venv
+  await run(uv, ['venv', '--python', '3.12', venv], (l) => setState({ message: l }))
+
+  // 2) torch (CUDA)
+  setState({ message: mt('ml.installTorch'), progress: 0.2 })
+  await run(
+    'uv',
+    ['pip', 'install', '--python', python, 'torch==2.6.0', 'torchaudio==2.6.0', '--index-url', PYTORCH_INDEX],
+    (l) => setState({ message: l.slice(0, 120) })
+  )
+
+  // 3) the rest (NeMo, pyannote, fastapi, numpy<2, …)
+  setState({ message: mt('ml.installDeps'), progress: 0.6 })
+  await run(uv, ['pip', 'install', '--python', python, '-r', requirementsFile()], (l) =>
+    setState({ message: l.slice(0, 120) })
+  )
+
+  setState({ message: mt('ml.envReady'), progress: 0.95 })
+  return python
+}
+
+async function waitForHealth(baseUrl: string, timeoutMs = 120_000): Promise<void> {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    try {
+      const res = await fetch(`${baseUrl}/health`, { signal: AbortSignal.timeout(3000) })
+      if (res.ok) {
+        const body = (await res.json()) as { device?: string }
+        setState({ device: body.device ?? null })
+        return
+      }
+    } catch {
+      /* not up yet */
+    }
+    await new Promise((r) => setTimeout(r, 1000))
+  }
+  throw new Error('ML worker did not become healthy in time')
+}
+
+async function spawnWorker(python: string): Promise<string> {
+  port = await getFreePort()
+  const baseUrl = `http://127.0.0.1:${port}`
+  setState({ status: 'starting', message: mt('ml.startingEngine'), progress: null })
+
+  proc = spawn(python, [workerScript(), '--port', String(port), '--warmup'], {
+    windowsHide: true,
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8', KMP_DUPLICATE_LIB_OK: 'TRUE' }
+  })
+  proc.stdout?.on('data', (b: Buffer) => console.log('[ml]', b.toString().trim()))
+  proc.stderr?.on('data', (b: Buffer) => console.log('[ml:err]', b.toString().trim()))
+  proc.on('close', (code) => {
+    console.log('[ml] worker exited', code)
+    proc = null
+    readyPromise = null
+    if (state.status === 'ready') setState({ status: 'idle', message: mt('ml.engineStopped') })
+  })
+
+  await waitForHealth(baseUrl)
+  setState({ status: 'ready', message: mt('ml.engineReady'), progress: null })
+  log('info', 'ml worker ready', baseUrl, 'device=' + (state.device ?? '?'))
+  return baseUrl
+}
+
+/** Ensure the worker is set up and running; returns its base URL. */
+export function ensureReady(): Promise<string> {
+  if (readyPromise) return readyPromise
+  readyPromise = (async () => {
+    try {
+      let python = findVenvPython()
+      if (!python) python = await runSetup()
+      return await spawnWorker(python)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      setState({ status: 'error', message, progress: null })
+      log('error', 'ml engine failed to start:', message)
+      readyPromise = null
+      throw e
+    }
+  })()
+  return readyPromise
+}
+
+async function post<T>(path: string, body: unknown, timeoutMs = 600_000): Promise<T> {
+  const baseUrl = await ensureReady()
+  const res = await fetch(`${baseUrl}${path}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(timeoutMs)
+  })
+  if (!res.ok) {
+    const detail = await res.text().catch(() => '')
+    throw new Error(`worker ${path} failed: ${res.status} ${detail}`)
+  }
+  return (await res.json()) as T
+}
+
+export interface TranscribeResult {
+  text: string
+  words: { start: number; end: number; word: string }[]
+  segments: { start: number; end: number; text: string }[]
+}
+
+export interface DiarizeResult {
+  segments: { start: number; end: number; speaker: string }[]
+}
+
+export function transcribeAudio(audioPath: string): Promise<TranscribeResult> {
+  return post<TranscribeResult>('/transcribe', { audio_path: audioPath })
+}
+
+export function diarizeAudio(
+  audioPath: string,
+  hfToken: string,
+  opts: { minSpeakers?: number; maxSpeakers?: number } = {}
+): Promise<DiarizeResult> {
+  return post<DiarizeResult>('/diarize', {
+    audio_path: audioPath,
+    hf_token: hfToken,
+    min_speakers: opts.minSpeakers,
+    max_speakers: opts.maxSpeakers
+  })
+}
+
+export function stopWorker(): void {
+  if (proc) {
+    proc.kill()
+    proc = null
+    readyPromise = null
+  }
+}

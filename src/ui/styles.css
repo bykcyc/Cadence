@@ -1,0 +1,60 @@
+@import 'tailwindcss';
+
+/* Class-based dark mode (toggled by setting the `.dark` class on <html>). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans:
+    -apple-system, 'SF Pro Text', 'Segoe UI Variable Text', 'Segoe UI', Inter, system-ui,
+    sans-serif;
+  --color-accent-50: #eef0ff;
+  --color-accent-100: #e0e3ff;
+  --color-accent-400: #7c86f7;
+  --color-accent-500: #5865f2;
+  --color-accent-600: #4a55e0;
+  --color-accent-700: #3e48c4;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+  body {
+    margin: 0;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    user-select: none;
+    cursor: default;
+    overflow: hidden;
+  }
+  /* Inputs and editable text should still allow selection */
+  input,
+  textarea {
+    user-select: text;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, currentColor 18%, transparent);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, currentColor 30%, transparent);
+    background-clip: content-box;
+  }
+}
+
+/* Electron drag regions for the custom title bar */
+.app-drag {
+  -webkit-app-region: drag;
+}
+.app-no-drag {
+  -webkit-app-region: no-drag;
+}

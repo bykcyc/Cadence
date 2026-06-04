@@ -1,0 +1,15 @@
+# Transcriber local ML worker dependencies.
+# NOTE: install torch FIRST with the CUDA index (handled by the app's setup step):
+#   uv pip install torch==2.6.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+# Then: uv pip install -r ml/requirements.txt
+#
+# numpy<2 is REQUIRED: numpy 2.x segfaults NeMo's native imports on Windows.
+numpy<2
+nemo_toolkit[asr]
+pyannote.audio
+fastapi
+uvicorn[standard]
+python-multipart
+soundfile
+# Read-aloud (TTS): online Edge neural voices. Invoked as `python -m edge_tts` from the venv.
+edge-tts==7.2.8
