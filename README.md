@@ -7,9 +7,13 @@
 Record your meetings, transcribe and diarize them on your own GPU, get AI meeting notes,
 dictate with your voice, and have any text read aloud — all from a lightweight tray app.
 
+[![Latest release](https://img.shields.io/github/v/release/bykcyc/Cadence?label=download&color=success)](https://github.com/bykcyc/Cadence/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/bykcyc/Cadence/total)](https://github.com/bykcyc/Cadence/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%2010%2F11-0078D6)](#-requirements)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![Made with Electron](https://img.shields.io/badge/Electron-React%20%2B%20TypeScript-47848F)](#-tech-stack)
+
+**[⬇️ Download the latest release](https://github.com/bykcyc/Cadence/releases/latest)**
 
 </div>
 
