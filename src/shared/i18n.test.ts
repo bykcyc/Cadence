@@ -56,9 +56,16 @@ describe('translate() / resolveLocale() / isRtl()', () => {
     expect(out).not.toContain('{n}')
   })
 
-  it('falls back to English for a key only present in en', () => {
-    // ml.cpuWarning exists in en (+ru); a non-en/ru locale falls back to the en text.
-    expect(translate('zh', 'ml.cpuWarning')).toBe(en['ml.cpuWarning'])
+  it('returns the key itself when it is unknown in every locale (final fallback)', () => {
+    expect(translate('zh', 'totally.unknown.key')).toBe('totally.unknown.key')
+    expect(translate('en', 'totally.unknown.key')).toBe('totally.unknown.key')
+  })
+
+  it('every locale fully covers the English key set (guards against translation drift)', () => {
+    for (const { code } of LOCALES) {
+      const missing = enKeys.filter((k) => !(k in messages[code]!))
+      expect(missing, `${code} is missing ${missing.length} key(s)`).toEqual([])
+    }
   })
 
   it('resolves system locale to a supported code, else English', () => {
