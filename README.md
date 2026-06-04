@@ -26,6 +26,18 @@ and speaker separation entirely on your machine** — nothing leaves your comput
 turn on an optional cloud feature (AI notes / read-aloud). It captures **your microphone and
 the meeting audio as separate tracks**, so "you vs. them" is perfectly split before any AI runs.
 
+## 📸 Screenshots
+
+<p align="center">
+  <img src="docs/recordings.png" width="840" alt="Recordings list — local transcription, speaker separation and AI-notes status per meeting">
+</p>
+
+<p align="center">
+  <img src="docs/meeting.png" width="49%" alt="Meeting detail — dual-track audio player and the diarized transcript by speaker">
+  &nbsp;
+  <img src="docs/settings.png" width="49%" alt="Settings — recording devices and the three dictation hotkey modes">
+</p>
+
 ## ✨ Features
 
 - **🎙️ Dual-track recording** — your mic and the meeting/system audio recorded separately (FLAC), plus a mixed track for playback. No virtual cable needed (WASAPI loopback).
