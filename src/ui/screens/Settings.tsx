@@ -298,6 +298,7 @@ export function SettingsScreen(): ReactNode {
   const [orModels, setOrModels] = useState<string[]>([])
   const [modelsMsg, setModelsMsg] = useState('')
   const [loadingModels, setLoadingModels] = useState(false)
+  const [modelOpen, setModelOpen] = useState(false)
 
   const [monitoring, setMonitoring] = useState(false)
   const [levels, setLevels] = useState({ mic: 0, system: 0 })
@@ -479,32 +480,57 @@ export function SettingsScreen(): ReactNode {
             />
           </Row>
           <Row label={t('field.model')}>
-            <div className="flex flex-col items-end gap-1.5">
+            <div className="relative flex flex-col items-end gap-1.5">
               <input
                 className={inputClass()}
-                list="or-models"
                 placeholder="deepseek-v4-flash"
                 value={settings.notesModel}
-                onChange={(e) => set({ notesModel: e.target.value })}
+                onChange={(e) => {
+                  set({ notesModel: e.target.value })
+                  setModelOpen(true)
+                }}
+                onFocus={() => orModels.length > 0 && setModelOpen(true)}
+                onBlur={() => window.setTimeout(() => setModelOpen(false), 150)}
               />
+              {settings.notesProvider === 'openrouter' &&
+                modelOpen &&
+                orModels.length > 0 &&
+                (() => {
+                  const q = settings.notesModel.toLowerCase()
+                  const matches = orModels.filter((m) => m.toLowerCase().includes(q)).slice(0, 200)
+                  if (matches.length === 0) return null
+                  return (
+                    <div className="absolute right-0 top-full z-20 mt-1 max-h-64 w-64 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-600 dark:bg-neutral-900">
+                      {matches.map((m) => (
+                        <button
+                          key={m}
+                          type="button"
+                          className="block w-full truncate px-2.5 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-700/60"
+                          // onMouseDown (not onClick) + preventDefault: fires before the input's
+                          // onBlur, so the selection registers without the dropdown closing first.
+                          onMouseDown={(e) => {
+                            e.preventDefault()
+                            set({ notesModel: m })
+                            setModelOpen(false)
+                          }}
+                        >
+                          {m}
+                        </button>
+                      ))}
+                    </div>
+                  )
+                })()}
               {settings.notesProvider === 'openrouter' && (
-                <>
-                  <datalist id="or-models">
-                    {orModels.map((m) => (
-                      <option key={m} value={m} />
-                    ))}
-                  </datalist>
-                  <div className="flex items-center gap-2">
-                    {modelsMsg && <span className="text-xs text-neutral-500">{modelsMsg}</span>}
-                    <Button
-                      variant="secondary"
-                      onClick={() => void fetchModels()}
-                      disabled={loadingModels || !settings.notesApiKeys?.openrouter}
-                    >
-                      {loadingModels ? <Spinner /> : t('field.getModels')}
-                    </Button>
-                  </div>
-                </>
+                <div className="flex items-center gap-2">
+                  {modelsMsg && <span className="text-xs text-neutral-500">{modelsMsg}</span>}
+                  <Button
+                    variant="secondary"
+                    onClick={() => void fetchModels()}
+                    disabled={loadingModels || !settings.notesApiKeys?.openrouter}
+                  >
+                    {loadingModels ? <Spinner /> : t('field.getModels')}
+                  </Button>
+                </div>
               )}
             </div>
           </Row>
