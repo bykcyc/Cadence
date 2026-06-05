@@ -145,6 +145,7 @@ export function resolveLocale(setting: LanguageSetting, systemLocale: string): L
 type Dict = Record<string, string>
 
 const en: Dict = {
+  'ml.onnxCpu': "ONNX engine runs on the CPU — slower than NeMo on a GPU.",
   'field.asrEngine': "Speech recognition engine",
   'asr.hint': "NeMo: most accurate, uses your GPU, heavy install. ONNX: lightweight, no CUDA, runs on CPU.",
   'llm.errNoModel': "No model selected (Settings → LLM provider)",
@@ -352,6 +353,7 @@ const en: Dict = {
 }
 
 const ru: Dict = {
+  'ml.onnxCpu': "Движок ONNX работает на CPU — медленнее, чем NeMo на GPU.",
   'field.asrEngine': "Движок распознавания речи",
   'asr.hint': "NeMo: точнее, на GPU, тяжёлая установка. ONNX: лёгкий, без CUDA, работает на CPU.",
   'llm.errNoModel': "Не выбрана модель (Настройки → LLM-провайдер)",
@@ -560,6 +562,7 @@ const ru: Dict = {
 }
 
 const zh: Dict = {
+  'ml.onnxCpu': "ONNX 引擎在 CPU 上运行——比 GPU 上的 NeMo 慢。",
   'field.asrEngine': "语音识别引擎",
   'asr.hint': "NeMo：更准确，使用 GPU，安装较大。ONNX：轻量，无需 CUDA，可在 CPU 上运行。",
   'llm.errNoModel': "未选择模型（设置 → LLM 提供商）",
@@ -763,6 +766,7 @@ const zh: Dict = {
 }
 
 const es: Dict = {
+  'ml.onnxCpu': "El motor ONNX se ejecuta en la CPU: más lento que NeMo en una GPU.",
   'field.asrEngine': "Motor de reconocimiento de voz",
   'asr.hint': "NeMo: más preciso, usa la GPU, instalación pesada. ONNX: ligero, sin CUDA, funciona en CPU.",
   'llm.errNoModel': "No se ha seleccionado un modelo (Ajustes → Proveedor de LLM)",
@@ -967,6 +971,7 @@ const es: Dict = {
 }
 
 const fr: Dict = {
+  'ml.onnxCpu': "Le moteur ONNX fonctionne sur le CPU — plus lent que NeMo sur un GPU.",
   'field.asrEngine': "Moteur de reconnaissance vocale",
   'asr.hint': "NeMo : plus précis, utilise le GPU, installation lourde. ONNX : léger, sans CUDA, sur CPU.",
   'llm.errNoModel': "Aucun modèle sélectionné (Paramètres → Fournisseur LLM)",
@@ -1171,6 +1176,7 @@ const fr: Dict = {
 }
 
 const de: Dict = {
+  'ml.onnxCpu': "Die ONNX-Engine läuft auf der CPU – langsamer als NeMo auf einer GPU.",
   'field.asrEngine': "Spracherkennungs-Engine",
   'asr.hint': "NeMo: genauer, nutzt die GPU, große Installation. ONNX: leicht, ohne CUDA, läuft auf der CPU.",
   'llm.errNoModel': "Kein Modell ausgewählt (Einstellungen → LLM-Anbieter)",
@@ -1375,6 +1381,7 @@ const de: Dict = {
 }
 
 const pt: Dict = {
+  'ml.onnxCpu': "O motor ONNX é executado na CPU — mais lento que o NeMo numa GPU.",
   'field.asrEngine': "Motor de reconhecimento de voz",
   'asr.hint': "NeMo: mais preciso, usa a GPU, instalação pesada. ONNX: leve, sem CUDA, funciona na CPU.",
   'llm.errNoModel': "Nenhum modelo selecionado (Definições → Provedor de LLM)",
@@ -1579,6 +1586,7 @@ const pt: Dict = {
 }
 
 const it: Dict = {
+  'ml.onnxCpu': "Il motore ONNX gira sulla CPU — più lento di NeMo su GPU.",
   'field.asrEngine': "Motore di riconoscimento vocale",
   'asr.hint': "NeMo: più preciso, usa la GPU, installazione pesante. ONNX: leggero, senza CUDA, su CPU.",
   'llm.errNoModel': "Nessun modello selezionato (Impostazioni → Provider LLM)",
@@ -1783,6 +1791,7 @@ const it: Dict = {
 }
 
 const ja: Dict = {
+  'ml.onnxCpu': "ONNX エンジンは CPU で動作します（GPU 上の NeMo より遅い）。",
   'field.asrEngine': "音声認識エンジン",
   'asr.hint': "NeMo：最も正確、GPU を使用、インストールが重い。ONNX：軽量、CUDA 不要、CPU で動作。",
   'llm.errNoModel': "モデルが選択されていません（設定 → LLM プロバイダー）",
@@ -1986,6 +1995,7 @@ const ja: Dict = {
 }
 
 const ko: Dict = {
+  'ml.onnxCpu': "ONNX 엔진은 CPU에서 실행됩니다 — GPU의 NeMo보다 느립니다.",
   'field.asrEngine': "음성 인식 엔진",
   'asr.hint': "NeMo: 가장 정확, GPU 사용, 설치가 무거움. ONNX: 가볍고 CUDA 불필요, CPU에서 실행.",
   'llm.errNoModel': "모델이 선택되지 않았습니다 (설정 → LLM 공급자)",
@@ -2189,6 +2199,7 @@ const ko: Dict = {
 }
 
 const ar: Dict = {
+  'ml.onnxCpu': "يعمل محرك ONNX على المعالج — أبطأ من NeMo على كرت الرسوميات.",
   'field.asrEngine': "محرك التعرف على الكلام",
   'asr.hint': "NeMo: الأدق، يستخدم كرت الرسوميات، تثبيت ثقيل. ONNX: خفيف، بدون CUDA، يعمل على المعالج.",
   'llm.errNoModel': "لم يتم اختيار نموذج (الإعدادات ← مزود LLM)",
@@ -2392,6 +2403,7 @@ const ar: Dict = {
 }
 
 const hi: Dict = {
+  'ml.onnxCpu': "ONNX इंजन CPU पर चलता है — GPU पर NeMo से धीमा।",
   'field.asrEngine': "वाक् पहचान इंजन",
   'asr.hint': "NeMo: सबसे सटीक, GPU का उपयोग, भारी इंस्टॉल। ONNX: हल्का, CUDA नहीं चाहिए, CPU पर चलता है।",
   'llm.errNoModel': "कोई मॉडल चयनित नहीं (सेटिंग्स → LLM प्रदाता)",
@@ -2595,6 +2607,7 @@ const hi: Dict = {
 }
 
 const tr: Dict = {
+  'ml.onnxCpu': "ONNX motoru CPU'da çalışır — GPU'daki NeMo'dan daha yavaş.",
   'field.asrEngine': "Konuşma tanıma motoru",
   'asr.hint': "NeMo: en doğru, GPU kullanır, kurulumu büyük. ONNX: hafif, CUDA gerekmez, CPU'da çalışır.",
   'llm.errNoModel': "Model seçilmedi (Ayarlar → LLM sağlayıcı)",
@@ -2799,6 +2812,7 @@ const tr: Dict = {
 }
 
 const pl: Dict = {
+  'ml.onnxCpu': "Silnik ONNX działa na CPU — wolniej niż NeMo na GPU.",
   'field.asrEngine': "Silnik rozpoznawania mowy",
   'asr.hint': "NeMo: najdokładniejszy, używa GPU, ciężka instalacja. ONNX: lekki, bez CUDA, działa na CPU.",
   'llm.errNoModel': "Nie wybrano modelu (Ustawienia → Dostawca LLM)",

@@ -593,7 +593,7 @@ function NotesSection({ meeting }: { meeting: Meeting }): ReactNode {
 }
 
 function MlBanner(): ReactNode {
-  const { ml, t } = useApp()
+  const { ml, settings, t } = useApp()
   if (ml.status === 'setup' || ml.status === 'starting') {
     return (
       <div className="mb-4 flex items-center gap-3 rounded-xl bg-accent-50 px-4 py-3 text-sm text-accent-700 dark:bg-accent-500/15 dark:text-accent-100">
@@ -608,10 +608,13 @@ function MlBanner(): ReactNode {
     )
   }
   if (ml.status === 'ready' && ml.device === 'cpu') {
+    // ONNX runs on the CPU by design (not a missing GPU) — show an informative note, not the
+    // "GPU not detected" warning that's only meaningful for the NeMo engine.
+    const onnx = settings?.asrEngine === 'onnx'
     return (
       <div className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
         <AlertCircle className="h-4 w-4 shrink-0" />
-        <span>{t('ml.cpuWarning')}</span>
+        <span>{onnx ? t('ml.onnxCpu') : t('ml.cpuWarning')}</span>
       </div>
     )
   }

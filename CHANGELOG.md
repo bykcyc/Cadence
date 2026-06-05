@@ -4,6 +4,13 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] — 2026-06-05
+
+### Fixed
+- With the **ONNX** engine selected, the status banner now reads "ONNX runs on the CPU"
+  instead of the misleading "No NVIDIA GPU detected" — CPU is the ONNX engine's design, not
+  a missing GPU (the old warning only applies to the NeMo engine).
+
 ## [0.1.5] — 2026-06-05
 
 ### Added
@@ -86,6 +93,7 @@ First public release.
 - Builds are unsigned, so Windows SmartScreen may warn on first launch (More info → Run anyway).
 - An NVIDIA GPU is recommended; the app falls back to CPU, which works but is slow.
 
+[0.1.6]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.6
 [0.1.5]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.5
 [0.1.4]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.4
 [0.1.3]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.3
