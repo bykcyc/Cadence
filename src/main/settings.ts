@@ -30,7 +30,9 @@ export function initSettings(): void {
       language: 'system',
       hfToken: null,
       mlPythonPath: null,
-      asrEngine: 'nemo',
+      // ONNX by default: installs tiny (no PyTorch/CUDA) and is stable. Users can switch to NeMo
+      // in Settings for ~15× faster GPU transcription of long meetings. Diarization always = NeMo.
+      asrEngine: 'onnx',
       notesProvider: 'deepseek',
       notesModel: 'deepseek-v4-flash',
       notesApiKey: null,

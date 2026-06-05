@@ -4,6 +4,21 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.7] — 2026-06-05
+
+### Changed
+- **ONNX is now the default speech-recognition engine.** New installs transcribe out of the box
+  with the lightweight ONNX engine — no PyTorch/CUDA download, a much smaller and faster first-run
+  setup, and none of the NeMo Windows crashes. The NeMo engine (PyTorch, GPU-accelerated, fastest
+  on long meetings) is still one click away in **Settings → Recording**, and speaker diarization
+  continues to use it. Existing users keep whichever engine they already selected.
+
+### Fixed
+- **ONNX no longer crashes partway through long recordings.** On long files (e.g. 84 min) the ONNX
+  worker could die mid-way through ("fetch failed") because per-chunk inference buffers weren't
+  released. The worker now frees them after each chunk (verified: 84 min → full transcript, 19 315
+  chars / 3 203 words / 356 segments, no crash).
+
 ## [0.1.6] — 2026-06-05
 
 ### Fixed
