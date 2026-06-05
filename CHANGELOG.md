@@ -4,6 +4,20 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] — 2026-06-05
+
+### Fixed
+- **Long meetings now transcribe instead of failing.** A long recording (e.g. 84 min) was
+  fed to the model in one pass → CUDA out-of-memory on smaller GPUs, producing an empty
+  transcript or crashing the engine ("fetch failed"). Audio is now split into 120-second
+  chunks and transcribed in a single low-memory pass (verified: 84 min → full transcript in
+  ~28 s on an 8 GB GPU).
+- **OpenRouter model picker is usable.** The model dropdown now scrolls and filters as you
+  type (the previous list couldn't be scrolled with 300+ models).
+- The Meeting-notes card shows the **currently-selected** model (updates when you switch
+  provider/model), and a missing model gives a clear "No model selected" message instead of
+  a cryptic provider error.
+
 ## [0.1.2] — 2026-06-05
 
 ### Fixed
@@ -54,6 +68,7 @@ First public release.
 - Builds are unsigned, so Windows SmartScreen may warn on first launch (More info → Run anyway).
 - An NVIDIA GPU is recommended; the app falls back to CPU, which works but is slow.
 
+[0.1.3]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.3
 [0.1.2]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.2
 [0.1.1]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.0
