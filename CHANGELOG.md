@@ -4,6 +4,25 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.8] — 2026-06-05
+
+### Changed
+- **The speech-recognition toggle is now labeled by what you get: CPU / GPU** (instead of the
+  internal engine names NeMo/ONNX). **CPU** = the lightweight default — no GPU or PyTorch needed,
+  great for short clips and dictation. **GPU** = much faster on long meetings, but needs an NVIDIA
+  GPU and a larger one-time download. (Under the hood CPU = ONNX, GPU = NeMo; ONNX on a GPU gives no
+  speedup — its decoder is CPU-bound — so the toggle exposes the choice that actually matters.)
+
+### Added
+- **A real percentage progress bar while transcribing on CPU.** The CPU engine streams its
+  per-chunk progress, so long recordings show a live `0 → 100 %` bar instead of an open-ended
+  spinner. (GPU transcription finishes in seconds, so it keeps a simple spinner.)
+
+### Removed
+- The "ONNX runs on the CPU" notice on the meeting view is gone — it was redundant on the default
+  path. A warning now appears only in the genuinely-wrong case: **GPU** mode selected on a machine
+  with no NVIDIA GPU (where it silently falls back to a slow CPU run).
+
 ## [0.1.7] — 2026-06-05
 
 ### Changed

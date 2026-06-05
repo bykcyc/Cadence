@@ -607,14 +607,14 @@ function MlBanner(): ReactNode {
       </div>
     )
   }
-  if (ml.status === 'ready' && ml.device === 'cpu') {
-    // ONNX runs on the CPU by design (not a missing GPU) — show an informative note, not the
-    // "GPU not detected" warning that's only meaningful for the NeMo engine.
-    const onnx = settings?.asrEngine === 'onnx'
+  if (ml.status === 'ready' && ml.device === 'cpu' && settings?.asrEngine === 'nemo') {
+    // GPU mode is selected but no NVIDIA GPU was found → NeMo falls back to the CPU (slow AND a
+    // heavy install). That's a genuine misconfiguration worth flagging. The default CPU mode (ONNX)
+    // running on the CPU is expected and shows no banner.
     return (
       <div className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
         <AlertCircle className="h-4 w-4 shrink-0" />
-        <span>{onnx ? t('ml.onnxCpu') : t('ml.cpuWarning')}</span>
+        <span>{t('ml.cpuWarning')}</span>
       </div>
     )
   }
@@ -785,9 +785,24 @@ function TranscriptSection({ meeting }: { meeting: Meeting }): ReactNode {
       </div>
 
       {activeRunning ? (
-        <div className="flex items-center gap-3 py-8 text-sm text-neutral-500">
-          <Spinner />
-          {activeJob?.message ?? t('common.processing')}
+        <div className="py-8">
+          <div className="flex items-center gap-3 text-sm text-neutral-500">
+            <Spinner />
+            <span>{activeJob?.message ?? t('common.processing')}</span>
+            {typeof activeJob?.percent === 'number' && (
+              <span className="ml-auto tabular-nums text-neutral-400">
+                {Math.round(activeJob.percent * 100)}%
+              </span>
+            )}
+          </div>
+          {typeof activeJob?.percent === 'number' && (
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+              <div
+                className="h-full rounded-full bg-accent-500 transition-[width] duration-300 ease-out"
+                style={{ width: `${Math.max(2, Math.round(activeJob.percent * 100))}%` }}
+              />
+            </div>
+          )}
         </div>
       ) : activeArtifact.status === 'error' ? (
         <div className="flex items-start gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-300">

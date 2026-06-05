@@ -417,12 +417,14 @@ export function SettingsScreen(): ReactNode {
             </Button>
           </Row>
           <Row label={t('field.asrEngine')} hint={t('asr.hint')}>
-            <Segmented<'nemo' | 'onnx'>
+            {/* CPU = ONNX (light, default), GPU = NeMo (fast, needs NVIDIA). Labeled by what the
+                user actually cares about (device/speed), not the backend's name. */}
+            <Segmented<'onnx' | 'nemo'>
               value={settings.asrEngine}
               onChange={(v) => set({ asrEngine: v })}
               options={[
-                { value: 'nemo', label: 'NeMo' },
-                { value: 'onnx', label: 'ONNX' }
+                { value: 'onnx', label: 'CPU' },
+                { value: 'nemo', label: 'GPU' }
               ]}
             />
           </Row>

@@ -212,4 +212,6 @@ export interface JobProgress {
   kind: JobKind
   status: ArtifactStatus
   message: string
+  /** 0..1 fractional progress for long, chunked steps (CPU/ONNX transcription). Absent = indeterminate. */
+  percent?: number
 }

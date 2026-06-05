@@ -24,8 +24,14 @@ function jobKey(id: string, diarize: boolean): string {
   return `${id}:${diarize}`
 }
 
-function progress(meetingId: string, kind: JobKind, status: ArtifactStatus, message: string): void {
-  broadcast(IPC.jobProgressEvent, { meetingId, kind, status, message })
+function progress(
+  meetingId: string,
+  kind: JobKind,
+  status: ArtifactStatus,
+  message: string,
+  percent?: number
+): void {
+  broadcast(IPC.jobProgressEvent, { meetingId, kind, status, message, percent })
 }
 
 async function setArtifact(
@@ -101,13 +107,19 @@ export async function runTranscription(meetingId: string, diarize: boolean): Pro
     let systemWords: Word[] = []
     let language: string | null = meeting.language
     if (micWav) {
-      progress(meetingId, kind, 'running', mt('job.recognizeMic'))
-      const r = await transcribeAudio(micWav)
+      const msg = mt('job.recognizeMic')
+      progress(meetingId, kind, 'running', msg, 0)
+      const r = await transcribeAudio(micWav, (v) =>
+        progress(meetingId, kind, 'running', msg, v)
+      )
       micWords = r.words
     }
     if (systemWav) {
-      progress(meetingId, kind, 'running', mt('job.recognizeSystem'))
-      const r = await transcribeAudio(systemWav)
+      const msg = mt('job.recognizeSystem')
+      progress(meetingId, kind, 'running', msg, 0)
+      const r = await transcribeAudio(systemWav, (v) =>
+        progress(meetingId, kind, 'running', msg, v)
+      )
       systemWords = r.words
     }
 

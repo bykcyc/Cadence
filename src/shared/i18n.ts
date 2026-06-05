@@ -147,7 +147,7 @@ type Dict = Record<string, string>
 const en: Dict = {
   'ml.onnxCpu': "ONNX engine runs on the CPU — slower than NeMo on a GPU.",
   'field.asrEngine': "Speech recognition engine",
-  'asr.hint': "NeMo: most accurate, uses your GPU, heavy install. ONNX: lightweight, no CUDA, runs on CPU.",
+  'asr.hint': "CPU — lightweight, no GPU needed; best for short clips and dictation. GPU — much faster on long meetings, but needs an NVIDIA GPU and a larger one-time download.",
   'llm.errNoModel': "No model selected (Settings → LLM provider)",
   'field.ttsLang': "Voice language",
   'tts.langAuto': "Auto-detect",
@@ -355,7 +355,7 @@ const en: Dict = {
 const ru: Dict = {
   'ml.onnxCpu': "Движок ONNX работает на CPU — медленнее, чем NeMo на GPU.",
   'field.asrEngine': "Движок распознавания речи",
-  'asr.hint': "NeMo: точнее, на GPU, тяжёлая установка. ONNX: лёгкий, без CUDA, работает на CPU.",
+  'asr.hint': "CPU — лёгкий режим, видеокарта не нужна; подходит для коротких записей и диктовки. GPU — намного быстрее на длинных встречах, но нужна видеокарта NVIDIA и разовая докачка побольше.",
   'llm.errNoModel': "Не выбрана модель (Настройки → LLM-провайдер)",
   'field.ttsLang': "Язык озвучки",
   'tts.langAuto': "Авто-определение",
@@ -564,7 +564,7 @@ const ru: Dict = {
 const zh: Dict = {
   'ml.onnxCpu': "ONNX 引擎在 CPU 上运行——比 GPU 上的 NeMo 慢。",
   'field.asrEngine': "语音识别引擎",
-  'asr.hint': "NeMo：更准确，使用 GPU，安装较大。ONNX：轻量，无需 CUDA，可在 CPU 上运行。",
+  'asr.hint': "CPU——轻量，无需 GPU；适合短音频和听写。GPU——长会议快得多，但需要 NVIDIA GPU 和一次较大的下载。",
   'llm.errNoModel': "未选择模型（设置 → LLM 提供商）",
   'field.ttsLang': "语音语言",
   'tts.langAuto': "自动检测",
@@ -768,7 +768,7 @@ const zh: Dict = {
 const es: Dict = {
   'ml.onnxCpu': "El motor ONNX se ejecuta en la CPU: más lento que NeMo en una GPU.",
   'field.asrEngine': "Motor de reconocimiento de voz",
-  'asr.hint': "NeMo: más preciso, usa la GPU, instalación pesada. ONNX: ligero, sin CUDA, funciona en CPU.",
+  'asr.hint': "CPU: ligero, sin GPU; ideal para clips cortos y dictado. GPU: mucho más rápido en reuniones largas, pero necesita una GPU NVIDIA y una descarga inicial más grande.",
   'llm.errNoModel': "No se ha seleccionado un modelo (Ajustes → Proveedor de LLM)",
   'field.ttsLang': "Idioma de la voz",
   'tts.langAuto': "Detección automática",
@@ -973,7 +973,7 @@ const es: Dict = {
 const fr: Dict = {
   'ml.onnxCpu': "Le moteur ONNX fonctionne sur le CPU — plus lent que NeMo sur un GPU.",
   'field.asrEngine': "Moteur de reconnaissance vocale",
-  'asr.hint': "NeMo : plus précis, utilise le GPU, installation lourde. ONNX : léger, sans CUDA, sur CPU.",
+  'asr.hint': "CPU : léger, sans GPU ; idéal pour les clips courts et la dictée. GPU : bien plus rapide sur les longues réunions, mais nécessite un GPU NVIDIA et un téléchargement initial plus lourd.",
   'llm.errNoModel': "Aucun modèle sélectionné (Paramètres → Fournisseur LLM)",
   'field.ttsLang': "Langue de la voix",
   'tts.langAuto': "Détection automatique",
@@ -1178,7 +1178,7 @@ const fr: Dict = {
 const de: Dict = {
   'ml.onnxCpu': "Die ONNX-Engine läuft auf der CPU – langsamer als NeMo auf einer GPU.",
   'field.asrEngine': "Spracherkennungs-Engine",
-  'asr.hint': "NeMo: genauer, nutzt die GPU, große Installation. ONNX: leicht, ohne CUDA, läuft auf der CPU.",
+  'asr.hint': "CPU: leicht, ohne GPU; ideal für kurze Clips und Diktat. GPU: viel schneller bei langen Meetings, benötigt aber eine NVIDIA-GPU und einen größeren einmaligen Download.",
   'llm.errNoModel': "Kein Modell ausgewählt (Einstellungen → LLM-Anbieter)",
   'field.ttsLang': "Sprache der Stimme",
   'tts.langAuto': "Automatisch erkennen",
@@ -1383,7 +1383,7 @@ const de: Dict = {
 const pt: Dict = {
   'ml.onnxCpu': "O motor ONNX é executado na CPU — mais lento que o NeMo numa GPU.",
   'field.asrEngine': "Motor de reconhecimento de voz",
-  'asr.hint': "NeMo: mais preciso, usa a GPU, instalação pesada. ONNX: leve, sem CUDA, funciona na CPU.",
+  'asr.hint': "CPU: leve, sem GPU; ideal para clipes curtos e ditado. GPU: muito mais rápido em reuniões longas, mas precisa de uma GPU NVIDIA e um download inicial maior.",
   'llm.errNoModel': "Nenhum modelo selecionado (Definições → Provedor de LLM)",
   'field.ttsLang': "Idioma da voz",
   'tts.langAuto': "Detecção automática",
@@ -1588,7 +1588,7 @@ const pt: Dict = {
 const it: Dict = {
   'ml.onnxCpu': "Il motore ONNX gira sulla CPU — più lento di NeMo su GPU.",
   'field.asrEngine': "Motore di riconoscimento vocale",
-  'asr.hint': "NeMo: più preciso, usa la GPU, installazione pesante. ONNX: leggero, senza CUDA, su CPU.",
+  'asr.hint': "CPU: leggero, senza GPU; ideale per clip brevi e dettatura. GPU: molto più veloce nelle riunioni lunghe, ma richiede una GPU NVIDIA e un download iniziale più grande.",
   'llm.errNoModel': "Nessun modello selezionato (Impostazioni → Provider LLM)",
   'field.ttsLang': "Lingua della voce",
   'tts.langAuto': "Rilevamento automatico",
@@ -1793,7 +1793,7 @@ const it: Dict = {
 const ja: Dict = {
   'ml.onnxCpu': "ONNX エンジンは CPU で動作します（GPU 上の NeMo より遅い）。",
   'field.asrEngine': "音声認識エンジン",
-  'asr.hint': "NeMo：最も正確、GPU を使用、インストールが重い。ONNX：軽量、CUDA 不要、CPU で動作。",
+  'asr.hint': "CPU：軽量、GPU 不要；短いクリップや音声入力に最適。GPU：長い会議で大幅に高速、ただし NVIDIA GPU と一度きりの大きなダウンロードが必要。",
   'llm.errNoModel': "モデルが選択されていません（設定 → LLM プロバイダー）",
   'field.ttsLang': "音声の言語",
   'tts.langAuto': "自動検出",
@@ -1997,7 +1997,7 @@ const ja: Dict = {
 const ko: Dict = {
   'ml.onnxCpu': "ONNX 엔진은 CPU에서 실행됩니다 — GPU의 NeMo보다 느립니다.",
   'field.asrEngine': "음성 인식 엔진",
-  'asr.hint': "NeMo: 가장 정확, GPU 사용, 설치가 무거움. ONNX: 가볍고 CUDA 불필요, CPU에서 실행.",
+  'asr.hint': "CPU: 가볍고 GPU 불필요; 짧은 클립과 받아쓰기에 적합. GPU: 긴 회의에서 훨씬 빠르지만 NVIDIA GPU와 한 번의 큰 다운로드가 필요.",
   'llm.errNoModel': "모델이 선택되지 않았습니다 (설정 → LLM 공급자)",
   'field.ttsLang': "음성 언어",
   'tts.langAuto': "자동 감지",
@@ -2201,7 +2201,7 @@ const ko: Dict = {
 const ar: Dict = {
   'ml.onnxCpu': "يعمل محرك ONNX على المعالج — أبطأ من NeMo على كرت الرسوميات.",
   'field.asrEngine': "محرك التعرف على الكلام",
-  'asr.hint': "NeMo: الأدق، يستخدم كرت الرسوميات، تثبيت ثقيل. ONNX: خفيف، بدون CUDA، يعمل على المعالج.",
+  'asr.hint': "CPU: خفيف، بدون GPU؛ الأفضل للمقاطع القصيرة والإملاء. GPU: أسرع بكثير في الاجتماعات الطويلة، لكنه يتطلب GPU من NVIDIA وتنزيلاً أكبر لمرة واحدة.",
   'llm.errNoModel': "لم يتم اختيار نموذج (الإعدادات ← مزود LLM)",
   'field.ttsLang': "لغة الصوت",
   'tts.langAuto': "كشف تلقائي",
@@ -2405,7 +2405,7 @@ const ar: Dict = {
 const hi: Dict = {
   'ml.onnxCpu': "ONNX इंजन CPU पर चलता है — GPU पर NeMo से धीमा।",
   'field.asrEngine': "वाक् पहचान इंजन",
-  'asr.hint': "NeMo: सबसे सटीक, GPU का उपयोग, भारी इंस्टॉल। ONNX: हल्का, CUDA नहीं चाहिए, CPU पर चलता है।",
+  'asr.hint': "CPU: हल्का, GPU की जरूरत नहीं; छोटे क्लिप और श्रुतलेखन के लिए सर्वोत्तम। GPU: लंबी मीटिंग में काफी तेज़, लेकिन NVIDIA GPU और एक बड़ा एकमुश्त डाउनलोड चाहिए।",
   'llm.errNoModel': "कोई मॉडल चयनित नहीं (सेटिंग्स → LLM प्रदाता)",
   'field.ttsLang': "आवाज़ की भाषा",
   'tts.langAuto': "स्वतः पहचान",
@@ -2609,7 +2609,7 @@ const hi: Dict = {
 const tr: Dict = {
   'ml.onnxCpu': "ONNX motoru CPU'da çalışır — GPU'daki NeMo'dan daha yavaş.",
   'field.asrEngine': "Konuşma tanıma motoru",
-  'asr.hint': "NeMo: en doğru, GPU kullanır, kurulumu büyük. ONNX: hafif, CUDA gerekmez, CPU'da çalışır.",
+  'asr.hint': "CPU: hafif, GPU gerekmez; kısa klipler ve dikte için en iyisi. GPU: uzun toplantılarda çok daha hızlı, ancak bir NVIDIA GPU ve büyük bir tek seferlik indirme gerektirir.",
   'llm.errNoModel': "Model seçilmedi (Ayarlar → LLM sağlayıcı)",
   'field.ttsLang': "Ses dili",
   'tts.langAuto': "Otomatik algıla",
@@ -2814,7 +2814,7 @@ const tr: Dict = {
 const pl: Dict = {
   'ml.onnxCpu': "Silnik ONNX działa na CPU — wolniej niż NeMo na GPU.",
   'field.asrEngine': "Silnik rozpoznawania mowy",
-  'asr.hint': "NeMo: najdokładniejszy, używa GPU, ciężka instalacja. ONNX: lekki, bez CUDA, działa na CPU.",
+  'asr.hint': "CPU: lekki, bez GPU; najlepszy do krótkich klipów i dyktowania. GPU: znacznie szybszy przy długich spotkaniach, ale wymaga karty NVIDIA GPU i większego jednorazowego pobrania.",
   'llm.errNoModel': "Nie wybrano modelu (Ustawienia → Dostawca LLM)",
   'field.ttsLang': "Język głosu",
   'tts.langAuto': "Automatyczne wykrywanie",

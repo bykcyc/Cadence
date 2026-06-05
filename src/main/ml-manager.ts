@@ -421,6 +421,73 @@ async function postTo<T>(
   }
 }
 
+/**
+ * Like postTo, but the worker streams NDJSON progress while it works:
+ *   {"type":"progress","value":0..1}  (repeated)
+ *   {"type":"result","data":<T>}      (final)
+ *   {"type":"error","message":"..."}  (on failure)
+ * Used for the CPU/ONNX transcription path so the UI can show a real percentage. Same
+ * restart-and-retry-once recovery as postTo if the worker process dies mid-stream.
+ */
+async function postStream<T>(
+  engine: WorkerEngine,
+  path: string,
+  body: unknown,
+  onProgress?: (value: number) => void,
+  timeoutMs = 3_600_000,
+  canRetry = true
+): Promise<T> {
+  const baseUrl = await engine.ensure()
+  try {
+    const res = await fetch(`${baseUrl}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs)
+    })
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      throw new Error(`worker ${path} failed: ${res.status} ${detail}`)
+    }
+    if (!res.body) throw new Error(`worker ${path} returned no body`)
+
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buf = ''
+    let result: T | undefined
+    const handleLine = (line: string): void => {
+      const s = line.trim()
+      if (!s) return
+      const msg = JSON.parse(s) as { type?: string; value?: number; data?: T; message?: string }
+      if (msg.type === 'progress' && typeof msg.value === 'number') onProgress?.(msg.value)
+      else if (msg.type === 'result') result = msg.data
+      else if (msg.type === 'error') throw new Error(msg.message || `worker ${path} error`)
+    }
+    for (;;) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buf += decoder.decode(value, { stream: true })
+      let nl: number
+      while ((nl = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, nl)
+        buf = buf.slice(nl + 1)
+        handleLine(line)
+      }
+    }
+    handleLine(buf) // trailing line with no newline
+    if (result === undefined) throw new Error(`worker ${path} stream ended without a result`)
+    return result
+  } catch (e) {
+    const endedNoResult = e instanceof Error && /ended without a result/.test(e.message)
+    if (canRetry && (isWorkerDown(e) || endedNoResult)) {
+      log('warn', `ml worker stream lost on ${path} — restarting worker and retrying once`)
+      engine.stop()
+      return postStream<T>(engine, path, body, onProgress, timeoutMs, false)
+    }
+    throw e
+  }
+}
+
 export interface TranscribeResult {
   text: string
   words: { start: number; end: number; word: string }[]
@@ -431,10 +498,17 @@ export interface DiarizeResult {
   segments: { start: number; end: number; speaker: string }[]
 }
 
-export function transcribeAudio(audioPath: string): Promise<TranscribeResult> {
-  // ONNX (lightweight, no torch) or NeMo (default), per the user's settings.
-  const engine = getSettings().asrEngine === 'onnx' ? onnxEngine : nemoEngine
-  return postTo<TranscribeResult>(engine, '/transcribe', { audio_path: audioPath })
+export function transcribeAudio(
+  audioPath: string,
+  onProgress?: (value: number) => void
+): Promise<TranscribeResult> {
+  // CPU mode = ONNX (lightweight, no torch); it streams per-chunk progress so the UI shows a real %.
+  // GPU mode = NeMo (default install path, fast); it transcribes all chunks in one batched call, so
+  // there's no intermediate progress — but it finishes in seconds, so an indeterminate spinner is fine.
+  if (getSettings().asrEngine === 'onnx') {
+    return postStream<TranscribeResult>(onnxEngine, '/transcribe', { audio_path: audioPath }, onProgress)
+  }
+  return postTo<TranscribeResult>(nemoEngine, '/transcribe', { audio_path: audioPath })
 }
 
 export function diarizeAudio(

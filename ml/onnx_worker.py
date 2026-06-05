@@ -14,6 +14,7 @@ os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 import argparse
 import gc
+import json
 import logging
 import math
 import re
@@ -26,6 +27,7 @@ import onnx_asr
 import onnxruntime as ort
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.WARNING)
@@ -133,66 +135,85 @@ def _to_segments(words):
     return segments
 
 
+def _transcribe_stream(model, audio_path: str):
+    """Yield NDJSON lines: {"type":"progress","value":0..1} per chunk, then a final
+    {"type":"result","data":{text,words,segments}}. The Electron side reads this stream
+    to drive a real percentage bar (CPU transcription is slow enough to warrant one)."""
+    try:
+        try:
+            with wave.open(audio_path, "rb") as w:
+                sr = w.getframerate()
+                nframes = w.getnframes()
+                nchan = w.getnchannels()
+                sampwidth = w.getsampwidth()
+                raw = w.readframes(nframes)
+        except Exception as e:  # noqa: BLE001 — not a readable PCM WAV; let the model try the path
+            logging.warning("wav read failed (%s); single-pass", e)
+            try:
+                r = model.recognize(audio_path)
+                words = _reconstruct_words(r, 0.0)
+                yield json.dumps({"type": "progress", "value": 1.0}) + "\n"
+                yield json.dumps(
+                    {"type": "result", "data": {"text": getattr(r, "text", "") or "", "words": words, "segments": _to_segments(words)}}
+                ) + "\n"
+            except Exception as e2:  # noqa: BLE001
+                logging.warning("transcribe failed: %s", e2)
+                yield json.dumps({"type": "result", "data": {"text": "", "words": [], "segments": []}}) + "\n"
+            return
+
+        # Chunk long audio so the O(n^2) Conformer encoder fits in memory. onnx-asr has no
+        # back-to-back-call crash (unlike NeMo), so a simple per-chunk recognize loop is safe.
+        bytes_per_frame = nchan * sampwidth
+        frames_per_chunk = int(ASR_CHUNK_SECONDS * sr)
+        n_chunks = max(1, math.ceil(nframes / float(frames_per_chunk)))
+        all_text, all_words = [], []
+        for i in range(n_chunks):
+            a = i * frames_per_chunk
+            b = min((i + 1) * frames_per_chunk, nframes)
+            if b <= a:
+                continue
+            tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
+            tmp.close()
+            try:
+                with wave.open(tmp.name, "wb") as out:
+                    out.setnchannels(nchan)
+                    out.setsampwidth(sampwidth)
+                    out.setframerate(sr)
+                    out.writeframes(raw[a * bytes_per_frame : b * bytes_per_frame])
+                print(f"[transcribe] chunk {i + 1}/{n_chunks}", flush=True)
+                r = model.recognize(tmp.name)
+                text = getattr(r, "text", "") or ""
+                if text:
+                    all_text.append(text)
+                all_words.extend(_reconstruct_words(r, i * ASR_CHUNK_SECONDS))
+                # Reclaim onnxruntime's per-call buffers each chunk — without this the worker grows
+                # and dies partway through a long (e.g. 84-min / 42-chunk) file.
+                del r
+                gc.collect()
+            except Exception as e:  # noqa: BLE001
+                logging.warning("transcribe chunk %d failed: %s", i + 1, e)
+            finally:
+                try:
+                    os.remove(tmp.name)
+                except OSError:
+                    pass
+            yield json.dumps({"type": "progress", "value": round((i + 1) / n_chunks, 4)}) + "\n"
+        yield json.dumps(
+            {"type": "result", "data": {"text": " ".join(all_text), "words": all_words, "segments": _to_segments(all_words)}}
+        ) + "\n"
+    except Exception as e:  # noqa: BLE001 — surface as a stream error line so the client can react
+        logging.warning("transcribe stream failed: %s", e)
+        yield json.dumps({"type": "error", "message": str(e)}) + "\n"
+
+
 @app.post("/transcribe")
 def transcribe(req: TranscribeReq):
     if not os.path.exists(req.audio_path):
         raise HTTPException(status_code=400, detail=f"audio not found: {req.audio_path}")
     model = get_asr()
-
-    try:
-        with wave.open(req.audio_path, "rb") as w:
-            sr = w.getframerate()
-            nframes = w.getnframes()
-            nchan = w.getnchannels()
-            sampwidth = w.getsampwidth()
-            raw = w.readframes(nframes)
-    except Exception as e:  # noqa: BLE001 — not a readable PCM WAV; let the model try the path
-        logging.warning("wav read failed (%s); single-pass", e)
-        try:
-            r = model.recognize(req.audio_path)
-            words = _reconstruct_words(r, 0.0)
-            return {"text": getattr(r, "text", "") or "", "words": words, "segments": _to_segments(words)}
-        except Exception as e2:  # noqa: BLE001
-            logging.warning("transcribe failed: %s", e2)
-            return {"text": "", "words": [], "segments": []}
-
-    # Chunk long audio so the O(n^2) Conformer encoder fits in memory. onnx-asr has no
-    # back-to-back-call crash (unlike NeMo), so a simple per-chunk recognize loop is safe.
-    bytes_per_frame = nchan * sampwidth
-    frames_per_chunk = int(ASR_CHUNK_SECONDS * sr)
-    n_chunks = max(1, math.ceil(nframes / float(frames_per_chunk)))
-    all_text, all_words = [], []
-    for i in range(n_chunks):
-        a = i * frames_per_chunk
-        b = min((i + 1) * frames_per_chunk, nframes)
-        if b <= a:
-            continue
-        tmp = tempfile.NamedTemporaryFile(suffix=".wav", delete=False)
-        tmp.close()
-        try:
-            with wave.open(tmp.name, "wb") as out:
-                out.setnchannels(nchan)
-                out.setsampwidth(sampwidth)
-                out.setframerate(sr)
-                out.writeframes(raw[a * bytes_per_frame : b * bytes_per_frame])
-            print(f"[transcribe] chunk {i + 1}/{n_chunks}", flush=True)
-            r = model.recognize(tmp.name)
-            text = getattr(r, "text", "") or ""
-            if text:
-                all_text.append(text)
-            all_words.extend(_reconstruct_words(r, i * ASR_CHUNK_SECONDS))
-            # Reclaim onnxruntime's per-call buffers each chunk — without this the worker grows
-            # and dies partway through a long (e.g. 84-min / 42-chunk) file.
-            del r
-            gc.collect()
-        except Exception as e:  # noqa: BLE001
-            logging.warning("transcribe chunk %d failed: %s", i + 1, e)
-        finally:
-            try:
-                os.remove(tmp.name)
-            except OSError:
-                pass
-    return {"text": " ".join(all_text), "words": all_words, "segments": _to_segments(all_words)}
+    return StreamingResponse(
+        _transcribe_stream(model, req.audio_path), media_type="application/x-ndjson"
+    )
 
 
 def main():
