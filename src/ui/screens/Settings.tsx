@@ -416,6 +416,16 @@ export function SettingsScreen(): ReactNode {
               {monitoring ? t('btn.stop') : t('btn.check')}
             </Button>
           </Row>
+          <Row label={t('field.asrEngine')} hint={t('asr.hint')}>
+            <Segmented<'nemo' | 'onnx'>
+              value={settings.asrEngine}
+              onChange={(v) => set({ asrEngine: v })}
+              options={[
+                { value: 'nemo', label: 'NeMo' },
+                { value: 'onnx', label: 'ONNX' }
+              ]}
+            />
+          </Row>
           {monitoring && (
             <div className="space-y-2 px-5 py-4">
               <LevelBar label={t('level.mic')} value={levels.mic} />

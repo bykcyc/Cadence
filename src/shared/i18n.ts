@@ -145,6 +145,8 @@ export function resolveLocale(setting: LanguageSetting, systemLocale: string): L
 type Dict = Record<string, string>
 
 const en: Dict = {
+  'field.asrEngine': "Speech recognition engine",
+  'asr.hint': "NeMo: most accurate, uses your GPU, heavy install. ONNX: lightweight, no CUDA, runs on CPU.",
   'llm.errNoModel': "No model selected (Settings → LLM provider)",
   'field.ttsLang': "Voice language",
   'tts.langAuto': "Auto-detect",
@@ -350,6 +352,8 @@ const en: Dict = {
 }
 
 const ru: Dict = {
+  'field.asrEngine': "Движок распознавания речи",
+  'asr.hint': "NeMo: точнее, на GPU, тяжёлая установка. ONNX: лёгкий, без CUDA, работает на CPU.",
   'llm.errNoModel': "Не выбрана модель (Настройки → LLM-провайдер)",
   'field.ttsLang': "Язык озвучки",
   'tts.langAuto': "Авто-определение",
@@ -556,6 +560,8 @@ const ru: Dict = {
 }
 
 const zh: Dict = {
+  'field.asrEngine': "语音识别引擎",
+  'asr.hint': "NeMo：更准确，使用 GPU，安装较大。ONNX：轻量，无需 CUDA，可在 CPU 上运行。",
   'llm.errNoModel': "未选择模型（设置 → LLM 提供商）",
   'field.ttsLang': "语音语言",
   'tts.langAuto': "自动检测",
@@ -757,6 +763,8 @@ const zh: Dict = {
 }
 
 const es: Dict = {
+  'field.asrEngine': "Motor de reconocimiento de voz",
+  'asr.hint': "NeMo: más preciso, usa la GPU, instalación pesada. ONNX: ligero, sin CUDA, funciona en CPU.",
   'llm.errNoModel': "No se ha seleccionado un modelo (Ajustes → Proveedor de LLM)",
   'field.ttsLang': "Idioma de la voz",
   'tts.langAuto': "Detección automática",
@@ -959,6 +967,8 @@ const es: Dict = {
 }
 
 const fr: Dict = {
+  'field.asrEngine': "Moteur de reconnaissance vocale",
+  'asr.hint': "NeMo : plus précis, utilise le GPU, installation lourde. ONNX : léger, sans CUDA, sur CPU.",
   'llm.errNoModel': "Aucun modèle sélectionné (Paramètres → Fournisseur LLM)",
   'field.ttsLang': "Langue de la voix",
   'tts.langAuto': "Détection automatique",
@@ -1161,6 +1171,8 @@ const fr: Dict = {
 }
 
 const de: Dict = {
+  'field.asrEngine': "Spracherkennungs-Engine",
+  'asr.hint': "NeMo: genauer, nutzt die GPU, große Installation. ONNX: leicht, ohne CUDA, läuft auf der CPU.",
   'llm.errNoModel': "Kein Modell ausgewählt (Einstellungen → LLM-Anbieter)",
   'field.ttsLang': "Sprache der Stimme",
   'tts.langAuto': "Automatisch erkennen",
@@ -1363,6 +1375,8 @@ const de: Dict = {
 }
 
 const pt: Dict = {
+  'field.asrEngine': "Motor de reconhecimento de voz",
+  'asr.hint': "NeMo: mais preciso, usa a GPU, instalação pesada. ONNX: leve, sem CUDA, funciona na CPU.",
   'llm.errNoModel': "Nenhum modelo selecionado (Definições → Provedor de LLM)",
   'field.ttsLang': "Idioma da voz",
   'tts.langAuto': "Detecção automática",
@@ -1565,6 +1579,8 @@ const pt: Dict = {
 }
 
 const it: Dict = {
+  'field.asrEngine': "Motore di riconoscimento vocale",
+  'asr.hint': "NeMo: più preciso, usa la GPU, installazione pesante. ONNX: leggero, senza CUDA, su CPU.",
   'llm.errNoModel': "Nessun modello selezionato (Impostazioni → Provider LLM)",
   'field.ttsLang': "Lingua della voce",
   'tts.langAuto': "Rilevamento automatico",
@@ -1767,6 +1783,8 @@ const it: Dict = {
 }
 
 const ja: Dict = {
+  'field.asrEngine': "音声認識エンジン",
+  'asr.hint': "NeMo：最も正確、GPU を使用、インストールが重い。ONNX：軽量、CUDA 不要、CPU で動作。",
   'llm.errNoModel': "モデルが選択されていません（設定 → LLM プロバイダー）",
   'field.ttsLang': "音声の言語",
   'tts.langAuto': "自動検出",
@@ -1968,6 +1986,8 @@ const ja: Dict = {
 }
 
 const ko: Dict = {
+  'field.asrEngine': "음성 인식 엔진",
+  'asr.hint': "NeMo: 가장 정확, GPU 사용, 설치가 무거움. ONNX: 가볍고 CUDA 불필요, CPU에서 실행.",
   'llm.errNoModel': "모델이 선택되지 않았습니다 (설정 → LLM 공급자)",
   'field.ttsLang': "음성 언어",
   'tts.langAuto': "자동 감지",
@@ -2169,6 +2189,8 @@ const ko: Dict = {
 }
 
 const ar: Dict = {
+  'field.asrEngine': "محرك التعرف على الكلام",
+  'asr.hint': "NeMo: الأدق، يستخدم كرت الرسوميات، تثبيت ثقيل. ONNX: خفيف، بدون CUDA، يعمل على المعالج.",
   'llm.errNoModel': "لم يتم اختيار نموذج (الإعدادات ← مزود LLM)",
   'field.ttsLang': "لغة الصوت",
   'tts.langAuto': "كشف تلقائي",
@@ -2370,6 +2392,8 @@ const ar: Dict = {
 }
 
 const hi: Dict = {
+  'field.asrEngine': "वाक् पहचान इंजन",
+  'asr.hint': "NeMo: सबसे सटीक, GPU का उपयोग, भारी इंस्टॉल। ONNX: हल्का, CUDA नहीं चाहिए, CPU पर चलता है।",
   'llm.errNoModel': "कोई मॉडल चयनित नहीं (सेटिंग्स → LLM प्रदाता)",
   'field.ttsLang': "आवाज़ की भाषा",
   'tts.langAuto': "स्वतः पहचान",
@@ -2571,6 +2595,8 @@ const hi: Dict = {
 }
 
 const tr: Dict = {
+  'field.asrEngine': "Konuşma tanıma motoru",
+  'asr.hint': "NeMo: en doğru, GPU kullanır, kurulumu büyük. ONNX: hafif, CUDA gerekmez, CPU'da çalışır.",
   'llm.errNoModel': "Model seçilmedi (Ayarlar → LLM sağlayıcı)",
   'field.ttsLang': "Ses dili",
   'tts.langAuto': "Otomatik algıla",
@@ -2773,6 +2799,8 @@ const tr: Dict = {
 }
 
 const pl: Dict = {
+  'field.asrEngine': "Silnik rozpoznawania mowy",
+  'asr.hint': "NeMo: najdokładniejszy, używa GPU, ciężka instalacja. ONNX: lekki, bez CUDA, działa na CPU.",
   'llm.errNoModel': "Nie wybrano modelu (Ustawienia → Dostawca LLM)",
   'field.ttsLang': "Język głosu",
   'tts.langAuto': "Automatyczne wykrywanie",

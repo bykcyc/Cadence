@@ -4,6 +4,16 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.5] — 2026-06-05
+
+### Added
+- **Second speech-recognition engine — ONNX (lightweight).** In **Settings → Recording →
+  "Speech recognition engine"** you can switch between:
+  - **NeMo** (default) — Parakeet via PyTorch, most accurate, uses your NVIDIA GPU, heavy install.
+  - **ONNX** — the same Parakeet v3 model via `onnx-asr`, **no PyTorch/CUDA**, installs tiny and
+    runs on the CPU (~12× realtime). Same transcript quality, and it avoids the NeMo Windows
+    crashes entirely. Speaker diarization still uses the NeMo engine.
+
 ## [0.1.4] — 2026-06-05
 
 ### Fixed
@@ -76,6 +86,7 @@ First public release.
 - Builds are unsigned, so Windows SmartScreen may warn on first launch (More info → Run anyway).
 - An NVIDIA GPU is recommended; the app falls back to CPU, which works but is slow.
 
+[0.1.5]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.5
 [0.1.4]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.4
 [0.1.3]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.3
 [0.1.2]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.2

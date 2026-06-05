@@ -30,6 +30,7 @@ export function initSettings(): void {
       language: 'system',
       hfToken: null,
       mlPythonPath: null,
+      asrEngine: 'nemo',
       notesProvider: 'deepseek',
       notesModel: 'deepseek-v4-flash',
       notesApiKey: null,

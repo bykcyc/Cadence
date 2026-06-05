@@ -27,6 +27,7 @@ extraResources:
     to: ml
     filter:
       - worker.py
+      - onnx_worker.py
       - requirements.txt
   # Tray + window icons loaded by absolute path at runtime.
   - from: resources/tray-idle.png

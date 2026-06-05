@@ -18,6 +18,12 @@ let proc: ChildProcess | null = null
 let port = 0
 let readyPromise: Promise<string> | null = null
 
+// Optional second ASR engine: Parakeet via ONNX (no torch/NeMo). Runs as its own lightweight
+// worker; selected via settings.asrEngine. Diarization always stays on the NeMo worker above.
+let onnxProc: ChildProcess | null = null
+let onnxPort = 0
+let onnxReadyPromise: Promise<string> | null = null
+
 function setState(patch: Partial<MlState>): void {
   state = { ...state, ...patch }
   broadcast(IPC.mlStatusEvent, state)
@@ -33,6 +39,10 @@ function mlSrcDir(): string {
 
 function workerScript(): string {
   return join(mlSrcDir(), 'worker.py')
+}
+
+function onnxWorkerScript(): string {
+  return join(mlSrcDir(), 'onnx_worker.py')
 }
 
 function requirementsFile(): string {
@@ -186,6 +196,39 @@ export function ensureTtsPython(): Promise<string> {
   return ttsPyPromise
 }
 
+function onnxVenvDir(): string {
+  return join(app.getPath('userData'), 'onnx-venv')
+}
+
+let onnxPyPromise: Promise<string> | null = null
+
+/** A Python interpreter with `onnx-asr` (+ fastapi/uvicorn for the worker), for the lightweight
+ *  ONNX ASR engine — no torch/NeMo. Creates a tiny dedicated `onnx-venv` on first use. Promise is
+ *  cached (reset on failure) so concurrent calls share one venv creation. */
+function ensureOnnxPython(): Promise<string> {
+  if (onnxPyPromise) return onnxPyPromise
+  onnxPyPromise = (async () => {
+    const venv = onnxVenvDir()
+    const py = join(venv, 'Scripts', 'python.exe')
+    if (existsSync(py) && (await canImport(py, 'onnx_asr'))) return py
+    const uv = await ensureUv()
+    setState({ status: 'setup', message: mt('ml.creatingEnv'), progress: 0.1 })
+    await run(uv, ['venv', '--python', '3.12', venv], () => {})
+    setState({ message: mt('ml.installDeps'), progress: 0.5 })
+    await run(
+      uv,
+      ['pip', 'install', '--python', py, 'onnx-asr[cpu,hub]', 'fastapi', 'uvicorn'],
+      (l) => setState({ message: l.slice(0, 120) })
+    )
+    setState({ message: mt('ml.envReady'), progress: 0.95 })
+    return py
+  })()
+  onnxPyPromise.catch(() => {
+    onnxPyPromise = null
+  })
+  return onnxPyPromise
+}
+
 /** Abort setup early with a clear message if the disk is too small for the ~8 GB ML stack. */
 async function assertEnoughDisk(): Promise<void> {
   let freeGb = Infinity
@@ -287,6 +330,47 @@ export function ensureReady(): Promise<string> {
   return readyPromise
 }
 
+async function spawnOnnxWorker(python: string): Promise<string> {
+  onnxPort = await getFreePort()
+  const baseUrl = `http://127.0.0.1:${onnxPort}`
+  setState({ status: 'starting', message: mt('ml.startingEngine'), progress: null })
+
+  onnxProc = spawn(python, [onnxWorkerScript(), '--port', String(onnxPort), '--warmup'], {
+    windowsHide: true,
+    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+  })
+  onnxProc.stdout?.on('data', (b: Buffer) => console.log('[onnx]', b.toString().trim()))
+  onnxProc.stderr?.on('data', (b: Buffer) => console.log('[onnx:err]', b.toString().trim()))
+  onnxProc.on('close', (code) => {
+    console.log('[onnx] worker exited', code)
+    onnxProc = null
+    onnxReadyPromise = null
+  })
+
+  await waitForHealth(baseUrl)
+  setState({ status: 'ready', message: mt('ml.engineReady'), progress: null })
+  log('info', 'onnx worker ready', baseUrl, 'device=' + (state.device ?? '?'))
+  return baseUrl
+}
+
+/** Ensure the lightweight ONNX ASR worker is set up and running; returns its base URL. */
+export function ensureOnnxReady(): Promise<string> {
+  if (onnxReadyPromise) return onnxReadyPromise
+  onnxReadyPromise = (async () => {
+    try {
+      const python = await ensureOnnxPython()
+      return await spawnOnnxWorker(python)
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e)
+      setState({ status: 'error', message, progress: null })
+      log('error', 'onnx engine failed to start:', message)
+      onnxReadyPromise = null
+      throw e
+    }
+  })()
+  return onnxReadyPromise
+}
+
 /** A dropped connection (vs. an HTTP error or a timeout) — i.e. the worker process died. */
 function isWorkerDown(e: unknown): boolean {
   if (!(e instanceof Error)) return false
@@ -297,8 +381,21 @@ function isWorkerDown(e: unknown): boolean {
   )
 }
 
-async function post<T>(path: string, body: unknown, timeoutMs = 600_000, canRetry = true): Promise<T> {
-  const baseUrl = await ensureReady()
+interface WorkerEngine {
+  ensure: () => Promise<string>
+  stop: () => void
+}
+const nemoEngine: WorkerEngine = { ensure: ensureReady, stop: stopNemoWorker }
+const onnxEngine: WorkerEngine = { ensure: ensureOnnxReady, stop: stopOnnxWorker }
+
+async function postTo<T>(
+  engine: WorkerEngine,
+  path: string,
+  body: unknown,
+  timeoutMs = 600_000,
+  canRetry = true
+): Promise<T> {
+  const baseUrl = await engine.ensure()
   try {
     const res = await fetch(`${baseUrl}${path}`, {
       method: 'POST',
@@ -312,13 +409,13 @@ async function post<T>(path: string, body: unknown, timeoutMs = 600_000, canRetr
     }
     return (await res.json()) as T
   } catch (e) {
-    // The NeMo ASR worker can hard-crash on a back-to-back transcribe call (a CUDA/Lhotse bug on
-    // Windows — a fresh worker always handles its first call fine). Recover transparently: stop the
-    // dead worker and retry the request once, which respawns it and runs on the fresh process.
+    // The ASR worker can hard-crash on a back-to-back call (a CUDA/Lhotse bug on Windows — a fresh
+    // worker always handles its first call fine). Recover transparently: stop the dead worker and
+    // retry the request once, which respawns it and runs on the fresh process.
     if (canRetry && isWorkerDown(e)) {
       log('warn', `ml worker connection lost on ${path} — restarting worker and retrying once`)
-      stopWorker()
-      return post<T>(path, body, timeoutMs, false)
+      engine.stop()
+      return postTo<T>(engine, path, body, timeoutMs, false)
     }
     throw e
   }
@@ -335,7 +432,9 @@ export interface DiarizeResult {
 }
 
 export function transcribeAudio(audioPath: string): Promise<TranscribeResult> {
-  return post<TranscribeResult>('/transcribe', { audio_path: audioPath })
+  // ONNX (lightweight, no torch) or NeMo (default), per the user's settings.
+  const engine = getSettings().asrEngine === 'onnx' ? onnxEngine : nemoEngine
+  return postTo<TranscribeResult>(engine, '/transcribe', { audio_path: audioPath })
 }
 
 export function diarizeAudio(
@@ -343,7 +442,8 @@ export function diarizeAudio(
   hfToken: string,
   opts: { minSpeakers?: number; maxSpeakers?: number } = {}
 ): Promise<DiarizeResult> {
-  return post<DiarizeResult>('/diarize', {
+  // Diarization (pyannote) always runs on the NeMo/torch worker — ONNX engine has no diarization.
+  return postTo<DiarizeResult>(nemoEngine, '/diarize', {
     audio_path: audioPath,
     hf_token: hfToken,
     min_speakers: opts.minSpeakers,
@@ -351,10 +451,24 @@ export function diarizeAudio(
   })
 }
 
-export function stopWorker(): void {
+function stopNemoWorker(): void {
   if (proc) {
     proc.kill()
     proc = null
     readyPromise = null
   }
+}
+
+function stopOnnxWorker(): void {
+  if (onnxProc) {
+    onnxProc.kill()
+    onnxProc = null
+    onnxReadyPromise = null
+  }
+}
+
+/** Stop both ASR workers (e.g. on app quit). */
+export function stopWorker(): void {
+  stopNemoWorker()
+  stopOnnxWorker()
 }

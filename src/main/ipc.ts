@@ -17,7 +17,7 @@ import {
   ensureRecordsDir,
   deleteMeeting
 } from './meetings'
-import { getMlState } from './ml-manager'
+import { getMlState, stopWorker } from './ml-manager'
 import { runTranscription } from './jobs/transcribe'
 import { runNotes } from './jobs/notes'
 import { startWatcher } from './watcher'
@@ -87,6 +87,8 @@ export function registerIpc(): void {
       broadcast(IPC.meetingsChangedEvent)
     }
     if ('localApiEnabled' in patch || 'localApiPort' in patch) restartLocalApi()
+    // Switching ASR engine: stop the running worker(s) so the next transcription spawns the chosen one.
+    if ('asrEngine' in patch) stopWorker()
     if (
       'dictateHotkey' in patch ||
       'polishHotkey' in patch ||
