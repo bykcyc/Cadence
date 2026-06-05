@@ -417,14 +417,14 @@ export function SettingsScreen(): ReactNode {
             </Button>
           </Row>
           <Row label={t('field.asrEngine')} hint={t('asr.hint')}>
-            {/* CPU = ONNX (light, default), GPU = NeMo (fast, needs NVIDIA). Labeled by what the
-                user actually cares about (device/speed), not the backend's name. */}
-            <Segmented<'onnx' | 'nemo'>
-              value={settings.asrEngine}
-              onChange={(v) => set({ asrEngine: v })}
+            {/* Both run the ONNX Parakeet engine; the choice is the device. CPU = lightweight
+                default; GPU = onnxruntime-gpu (~7x faster on long meetings, larger one-time install). */}
+            <Segmented<'cpu' | 'gpu'>
+              value={settings.asrDevice}
+              onChange={(v) => set({ asrDevice: v })}
               options={[
-                { value: 'onnx', label: 'CPU' },
-                { value: 'nemo', label: 'GPU' }
+                { value: 'cpu', label: 'CPU' },
+                { value: 'gpu', label: 'GPU' }
               ]}
             />
           </Row>

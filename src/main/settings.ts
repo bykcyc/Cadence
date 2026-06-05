@@ -30,9 +30,9 @@ export function initSettings(): void {
       language: 'system',
       hfToken: null,
       mlPythonPath: null,
-      // ONNX by default: installs tiny (no PyTorch/CUDA) and is stable. Users can switch to NeMo
-      // in Settings for ~15× faster GPU transcription of long meetings. Diarization always = NeMo.
-      asrEngine: 'onnx',
+      // ASR device: 'cpu' is the lightweight default (ONNX, no GPU/PyTorch). 'gpu' uses
+      // onnxruntime-gpu (~7× faster on long meetings, larger one-time install). Diarization = NeMo.
+      asrDevice: 'cpu',
       notesProvider: 'deepseek',
       notesModel: 'deepseek-v4-flash',
       notesApiKey: null,
@@ -87,6 +87,16 @@ export function initSettings(): void {
       store.set('notesApiKeys', { [store.get('notesProvider')]: legacyKey })
     }
     store.set('notesApiKey', null)
+  }
+
+  // Migrate the old asrEngine setting (nemo/onnx) to asrDevice (gpu/cpu), once. 'onnx' was the
+  // lightweight CPU engine → 'cpu'; 'nemo' was the GPU engine → 'gpu' (now ONNX-on-GPU). Users who
+  // never chose one fall through to the 'cpu' default.
+  const legacyStore = store as unknown as { get(k: string): unknown; delete(k: string): void }
+  const legacyEngine = legacyStore.get('asrEngine')
+  if (legacyEngine === 'nemo' || legacyEngine === 'onnx') {
+    store.set('asrDevice', legacyEngine === 'nemo' ? 'gpu' : 'cpu')
+    legacyStore.delete('asrEngine')
   }
 }
 

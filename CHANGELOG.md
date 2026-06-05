@@ -4,6 +4,23 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.9] — 2026-06-05
+
+### Changed
+- **GPU mode now runs the ONNX engine on your GPU — ~7× faster, all-ONNX.** Transcription is now a
+  single engine (ONNX Parakeet) with a **CPU / GPU** switch in *Settings → Recording*. **GPU** uses
+  `onnxruntime-gpu` and is ~7× faster than CPU on long meetings (an 84-min file goes from ~8 min to
+  ~1 min; benchmarked on an RTX 2070 SUPER: ~1.5 s vs ~11 s per 120-s chunk). The first time you
+  switch to GPU it downloads the CUDA libraries (~1.8 GB). NeMo/PyTorch is no longer used for
+  transcription at all — it's kept only for **speaker diarization** ("By speakers"). Your previous
+  choice is migrated automatically (lightweight → CPU, fast → GPU).
+- **The progress bar now also works in GPU mode** (both CPU and GPU stream per-chunk progress).
+
+### Fixed
+- **Corrected a wrong earlier finding that "ONNX on the GPU gives no speedup."** That measurement was
+  a *silent CPU fallback* — onnxruntime couldn't load CUDA (a missing `cublasLt64_12.dll`), so it
+  quietly ran on the CPU and looked identical. With CUDA actually bound, ONNX on the GPU is ~7× faster.
+
 ## [0.1.8] — 2026-06-05
 
 ### Changed

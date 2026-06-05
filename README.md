@@ -67,17 +67,18 @@ the meeting audio as separate tracks**, so "you vs. them" is perfectly split bef
 2. Run it. The app appears in the system tray.
 3. On the **first transcription**, Cadence automatically sets up its local engine — it installs the
    [`uv`](https://github.com/astral-sh/uv) package manager (if missing), creates a Python environment,
-   and downloads the speech model (cached afterwards). No console, no manual steps. By default this is
-   the lightweight **ONNX** engine (no PyTorch, ~1 GB) which runs well on CPU. Switch to **NeMo** in
-   *Settings → Recording* for GPU-accelerated transcription of long meetings — that engine pulls
-   PyTorch (CUDA) + the full ML stack (~2–4 GB) on first use. Speaker diarization always uses NeMo.
+   and downloads the speech model (cached afterwards). No console, no manual steps. Transcription uses
+   the **ONNX Parakeet** engine in one of two modes (*Settings → Recording*): **CPU** — the lightweight
+   default (~1 GB, no GPU); or **GPU** — onnxruntime-gpu for ~7× faster transcription of long meetings
+   (downloads the CUDA libraries, ~1.8 GB, the first time you switch). Speaker diarization uses a
+   separate NeMo/PyTorch engine (set up only if you use it).
 
 > The build is unsigned, so Windows SmartScreen may warn on first launch → **More info → Run anyway**.
 
 ## 💻 Requirements
 
 - **Windows 10 / 11 (x64).**
-- **NVIDIA GPU recommended** for fast transcription. The default ONNX engine runs fine on CPU (~real-time-ish for typical meetings); the optional NeMo engine is much faster on long files but needs a CUDA GPU.
+- **NVIDIA GPU recommended** for fast transcription. The default **CPU** mode runs fine for short clips & dictation; **GPU** mode (an NVIDIA CUDA card) is ~7× faster on long meetings (84 min ≈ 1 min vs ~8 min).
 - **Internet on first run** (to download the engine + models) and for the optional cloud features.
 - For **speaker diarization**: a free [Hugging Face](https://huggingface.co/settings/tokens) **read** token, and accept the licenses of `pyannote/speaker-diarization-3.1` and `pyannote/segmentation-3.0`.
 - For **AI notes / dictation polish & translate**: an API key (DeepSeek by default; OpenRouter / Mistral also supported).

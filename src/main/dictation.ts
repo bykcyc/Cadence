@@ -6,7 +6,7 @@ import type { DictationKind, DictationState, HotkeyBinding } from '@shared/types
 import { startHotkeys, setBindings, stopHotkeys } from './hotkeys'
 import { getMainWindow } from './windows'
 import { getSettings } from './settings'
-import { transcribeAudio, ensureReady, ensureOnnxReady } from './ml-manager'
+import { transcribeAudio, ensureOnnxReady } from './ml-manager'
 import { showOverlay, updateOverlay, hideOverlay, createOverlay, sendOverlayLevel } from './overlay'
 import { insertText, copyToClipboard } from './inject'
 import { addHistory } from './dictation-history'
@@ -50,11 +50,9 @@ function startSession(kind: DictationKind): void {
   setState({ phase: 'recording', kind, message: '' })
   showOverlay(state)
   wc.send(IPC.dictationCaptureStart, { micDeviceId: getSettings().micDeviceId })
-  // Warm the SELECTED ASR engine while the user is speaking, so transcription is ready by the
-  // time they release the hotkey. Must honor asrEngine — otherwise an ONNX user would trigger the
-  // heavy NeMo/torch setup the ONNX engine exists to avoid.
-  const warm = getSettings().asrEngine === 'onnx' ? ensureOnnxReady : ensureReady
-  void warm().catch(() => {})
+  // Warm the ONNX ASR worker (cpu/gpu per settings — ensureOnnxReady picks the device) while the
+  // user is speaking, so transcription is ready by the time they release the hotkey.
+  void ensureOnnxReady().catch(() => {})
 }
 
 function stopSession(): void {

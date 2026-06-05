@@ -18,11 +18,14 @@ let proc: ChildProcess | null = null
 let port = 0
 let readyPromise: Promise<string> | null = null
 
-// Optional second ASR engine: Parakeet via ONNX (no torch/NeMo). Runs as its own lightweight
-// worker; selected via settings.asrEngine. Diarization always stays on the NeMo worker above.
+// ASR runs on the ONNX worker (Parakeet via onnx-asr, no torch/NeMo) in one of two devices,
+// chosen by settings.asrDevice: 'cpu' (lightweight default) or 'gpu' (onnxruntime-gpu, ~7x faster).
+// Diarization always stays on the NeMo/torch worker above.
+type OnnxDevice = 'cpu' | 'gpu'
 let onnxProc: ChildProcess | null = null
 let onnxPort = 0
 let onnxReadyPromise: Promise<string> | null = null
+let onnxDevice: OnnxDevice | null = null // device of the currently-running onnx worker
 
 function setState(patch: Partial<MlState>): void {
   state = { ...state, ...patch }
@@ -196,37 +199,56 @@ export function ensureTtsPython(): Promise<string> {
   return ttsPyPromise
 }
 
-function onnxVenvDir(): string {
-  return join(app.getPath('userData'), 'onnx-venv')
+function onnxVenvDir(device: OnnxDevice): string {
+  // Two separate venvs so the CPU default stays tiny: 'onnx-venv' (CPU onnxruntime, ~1 GB) and
+  // 'onnx-gpu-venv' (onnxruntime-gpu + the nvidia CUDA/cuDNN wheels, ~1.8 GB).
+  return join(app.getPath('userData'), device === 'gpu' ? 'onnx-gpu-venv' : 'onnx-venv')
 }
 
-let onnxPyPromise: Promise<string> | null = null
+// CUDA 12 + cuDNN 9 wheels onnxruntime-gpu needs. The worker puts their bin dirs on the DLL search
+// path at startup. Self-contained (no torch dependency) so a GPU user who never runs diarization
+// still gets a working CUDA setup.
+const ONNX_GPU_CUDA_PKGS = [
+  'nvidia-cublas-cu12',
+  'nvidia-cudnn-cu12',
+  'nvidia-cuda-runtime-cu12',
+  'nvidia-cufft-cu12',
+  'nvidia-curand-cu12',
+  'nvidia-cusparse-cu12',
+  'nvidia-cuda-nvrtc-cu12'
+]
 
-/** A Python interpreter with `onnx-asr` (+ fastapi/uvicorn for the worker), for the lightweight
- *  ONNX ASR engine — no torch/NeMo. Creates a tiny dedicated `onnx-venv` on first use. Promise is
- *  cached (reset on failure) so concurrent calls share one venv creation. */
-function ensureOnnxPython(): Promise<string> {
-  if (onnxPyPromise) return onnxPyPromise
-  onnxPyPromise = (async () => {
-    const venv = onnxVenvDir()
+const onnxPyPromise: Partial<Record<OnnxDevice, Promise<string>>> = {}
+
+/** A Python interpreter with `onnx-asr` (+ fastapi/uvicorn) for the ONNX ASR worker. For 'gpu' it
+ *  also installs onnxruntime-gpu + the nvidia CUDA wheels. Creates a dedicated venv per device on
+ *  first use. Promise is cached per device (reset on failure) so concurrent calls share one build. */
+function ensureOnnxPython(device: OnnxDevice): Promise<string> {
+  const cached = onnxPyPromise[device]
+  if (cached) return cached
+  const p = (async () => {
+    const venv = onnxVenvDir(device)
     const py = join(venv, 'Scripts', 'python.exe')
     if (existsSync(py) && (await canImport(py, 'onnx_asr'))) return py
     const uv = await ensureUv()
     setState({ status: 'setup', message: mt('ml.creatingEnv'), progress: 0.1 })
     await run(uv, ['venv', '--python', '3.12', venv], () => {})
-    setState({ message: mt('ml.installDeps'), progress: 0.5 })
-    await run(
-      uv,
-      ['pip', 'install', '--python', py, 'onnx-asr[cpu,hub]', 'fastapi', 'uvicorn'],
-      (l) => setState({ message: l.slice(0, 120) })
+    setState({ message: mt('ml.installDeps'), progress: 0.4 })
+    const pkgs =
+      device === 'gpu'
+        ? ['onnx-asr[gpu,hub]', ...ONNX_GPU_CUDA_PKGS, 'fastapi', 'uvicorn']
+        : ['onnx-asr[cpu,hub]', 'fastapi', 'uvicorn']
+    await run(uv, ['pip', 'install', '--python', py, ...pkgs], (l) =>
+      setState({ message: l.slice(0, 120) })
     )
     setState({ message: mt('ml.envReady'), progress: 0.95 })
     return py
   })()
-  onnxPyPromise.catch(() => {
-    onnxPyPromise = null
+  onnxPyPromise[device] = p
+  p.catch(() => {
+    delete onnxPyPromise[device]
   })
-  return onnxPyPromise
+  return p
 }
 
 /** Abort setup early with a clear message if the disk is too small for the ~8 GB ML stack. */
@@ -330,21 +352,24 @@ export function ensureReady(): Promise<string> {
   return readyPromise
 }
 
-async function spawnOnnxWorker(python: string): Promise<string> {
+async function spawnOnnxWorker(python: string, device: OnnxDevice): Promise<string> {
   onnxPort = await getFreePort()
+  onnxDevice = device
   const baseUrl = `http://127.0.0.1:${onnxPort}`
   setState({ status: 'starting', message: mt('ml.startingEngine'), progress: null })
 
-  onnxProc = spawn(python, [onnxWorkerScript(), '--port', String(onnxPort), '--warmup'], {
-    windowsHide: true,
-    env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
-  })
+  onnxProc = spawn(
+    python,
+    [onnxWorkerScript(), '--port', String(onnxPort), '--device', device, '--warmup'],
+    { windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8' } }
+  )
   onnxProc.stdout?.on('data', (b: Buffer) => console.log('[onnx]', b.toString().trim()))
   onnxProc.stderr?.on('data', (b: Buffer) => console.log('[onnx:err]', b.toString().trim()))
   onnxProc.on('close', (code) => {
     console.log('[onnx] worker exited', code)
     onnxProc = null
     onnxReadyPromise = null
+    onnxDevice = null
   })
 
   await waitForHealth(baseUrl)
@@ -353,13 +378,16 @@ async function spawnOnnxWorker(python: string): Promise<string> {
   return baseUrl
 }
 
-/** Ensure the lightweight ONNX ASR worker is set up and running; returns its base URL. */
+/** Ensure the ONNX ASR worker is set up and running for the device in settings (cpu/gpu); returns
+ *  its base URL. If a worker is already running for the other device, it is stopped and respawned. */
 export function ensureOnnxReady(): Promise<string> {
+  const device: OnnxDevice = getSettings().asrDevice === 'gpu' ? 'gpu' : 'cpu'
+  if (onnxReadyPromise && onnxDevice && onnxDevice !== device) stopOnnxWorker()
   if (onnxReadyPromise) return onnxReadyPromise
   onnxReadyPromise = (async () => {
     try {
-      const python = await ensureOnnxPython()
-      return await spawnOnnxWorker(python)
+      const python = await ensureOnnxPython(device)
+      return await spawnOnnxWorker(python, device)
     } catch (e) {
       const message = e instanceof Error ? e.message : String(e)
       setState({ status: 'error', message, progress: null })
@@ -502,13 +530,9 @@ export function transcribeAudio(
   audioPath: string,
   onProgress?: (value: number) => void
 ): Promise<TranscribeResult> {
-  // CPU mode = ONNX (lightweight, no torch); it streams per-chunk progress so the UI shows a real %.
-  // GPU mode = NeMo (default install path, fast); it transcribes all chunks in one batched call, so
-  // there's no intermediate progress — but it finishes in seconds, so an indeterminate spinner is fine.
-  if (getSettings().asrEngine === 'onnx') {
-    return postStream<TranscribeResult>(onnxEngine, '/transcribe', { audio_path: audioPath }, onProgress)
-  }
-  return postTo<TranscribeResult>(nemoEngine, '/transcribe', { audio_path: audioPath })
+  // Always the ONNX worker — CPU or GPU per settings.asrDevice (ensureOnnxReady picks the venv).
+  // It streams per-chunk progress, so the UI shows a real %. NeMo/torch is diarization-only now.
+  return postStream<TranscribeResult>(onnxEngine, '/transcribe', { audio_path: audioPath }, onProgress)
 }
 
 export function diarizeAudio(
@@ -539,6 +563,7 @@ function stopOnnxWorker(): void {
     onnxProc = null
     onnxReadyPromise = null
   }
+  onnxDevice = null
 }
 
 /** Stop both ASR workers (e.g. on app quit). */

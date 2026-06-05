@@ -607,10 +607,10 @@ function MlBanner(): ReactNode {
       </div>
     )
   }
-  if (ml.status === 'ready' && ml.device === 'cpu' && settings?.asrEngine === 'nemo') {
-    // GPU mode is selected but no NVIDIA GPU was found → NeMo falls back to the CPU (slow AND a
-    // heavy install). That's a genuine misconfiguration worth flagging. The default CPU mode (ONNX)
-    // running on the CPU is expected and shows no banner.
+  if (ml.status === 'ready' && ml.device === 'cpu' && settings?.asrDevice === 'gpu') {
+    // GPU mode is selected but CUDA didn't bind (no NVIDIA GPU / driver) → the worker fell back to
+    // the CPU. That's a genuine misconfiguration worth flagging. The default CPU mode running on the
+    // CPU is expected and shows no banner.
     return (
       <div className="mb-4 flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-700 dark:bg-amber-500/15 dark:text-amber-200">
         <AlertCircle className="h-4 w-4 shrink-0" />

@@ -63,9 +63,9 @@ export interface AppSettings {
   hfToken: string | null
   // Optional override: path to the ML venv's python.exe. Empty = auto-detect.
   mlPythonPath: string | null
-  // ASR engine: 'nemo' (Parakeet via NeMo+PyTorch — accurate, GPU, heavy) or
-  // 'onnx' (Parakeet via onnx-asr — lightweight, no torch, no CUDA needed).
-  asrEngine: 'nemo' | 'onnx'
+  // ASR device for the ONNX Parakeet engine: 'cpu' (lightweight default, no GPU) or
+  // 'gpu' (onnxruntime-gpu + CUDA, ~7x faster on long meetings, larger one-time install).
+  asrDevice: 'cpu' | 'gpu'
   // Meeting notes (iteration 3).
   notesProvider: NotesProvider
   notesModel: string
