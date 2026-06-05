@@ -295,6 +295,9 @@ export function SettingsScreen(): ReactNode {
   useEffect(() => void window.api.app.getVersion().then(setVersion), [])
   const [inputs, setInputs] = useState<MediaDeviceInfo[]>([])
   const [outputs, setOutputs] = useState<MediaDeviceInfo[]>([])
+  const [orModels, setOrModels] = useState<string[]>([])
+  const [modelsMsg, setModelsMsg] = useState('')
+  const [loadingModels, setLoadingModels] = useState(false)
 
   const [monitoring, setMonitoring] = useState(false)
   const [levels, setLevels] = useState({ mic: 0, system: 0 })
@@ -335,6 +338,19 @@ export function SettingsScreen(): ReactNode {
   }
 
   const set = (patch: Partial<AppSettings>): void => void updateSettings(patch)
+
+  const fetchModels = async (): Promise<void> => {
+    setLoadingModels(true)
+    setModelsMsg('')
+    const res = await window.api.llm.getModels(settings.notesApiKeys?.openrouter ?? '')
+    setLoadingModels(false)
+    if (res.models) {
+      setOrModels(res.models)
+      setModelsMsg(t('llm.modelsLoaded', { n: res.models.length }))
+    } else {
+      setModelsMsg(t('llm.modelsError'))
+    }
+  }
 
   const toggleMonitor = async (): Promise<void> => {
     if (monitoring) {
@@ -422,15 +438,19 @@ export function SettingsScreen(): ReactNode {
           <Row label={t('field.ttsHotkey')}>
             <HotkeyField binding={settings.ttsHotkey} onChange={(b) => set({ ttsHotkey: b })} />
           </Row>
-          <Row label={t('field.ttsVoice')}>
-            <Segmented
-              value={settings.ttsVoice}
-              onChange={(v) => set({ ttsVoice: v })}
-              options={[
-                { value: 'ru-RU-SvetlanaNeural', label: 'Светлана' },
-                { value: 'ru-RU-DmitryNeural', label: 'Дмитрий' }
-              ]}
-            />
+          <Row label={t('field.ttsLang')}>
+            <select
+              className={selectClass()}
+              value={settings.ttsLang}
+              onChange={(e) => set({ ttsLang: e.target.value })}
+            >
+              <option value="auto">{t('tts.langAuto')}</option>
+              {LOCALES.map((l) => (
+                <option key={l.code} value={l.code}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
           </Row>
           <Row label={t('field.ttsSpeed')}>
             <Segmented
@@ -459,20 +479,49 @@ export function SettingsScreen(): ReactNode {
             />
           </Row>
           <Row label={t('field.model')}>
-            <input
-              className={inputClass()}
-              placeholder="deepseek-v4-flash"
-              value={settings.notesModel}
-              onChange={(e) => set({ notesModel: e.target.value })}
-            />
+            <div className="flex flex-col items-end gap-1.5">
+              <input
+                className={inputClass()}
+                list="or-models"
+                placeholder="deepseek-v4-flash"
+                value={settings.notesModel}
+                onChange={(e) => set({ notesModel: e.target.value })}
+              />
+              {settings.notesProvider === 'openrouter' && (
+                <>
+                  <datalist id="or-models">
+                    {orModels.map((m) => (
+                      <option key={m} value={m} />
+                    ))}
+                  </datalist>
+                  <div className="flex items-center gap-2">
+                    {modelsMsg && <span className="text-xs text-neutral-500">{modelsMsg}</span>}
+                    <Button
+                      variant="secondary"
+                      onClick={() => void fetchModels()}
+                      disabled={loadingModels || !settings.notesApiKeys?.openrouter}
+                    >
+                      {loadingModels ? <Spinner /> : t('field.getModels')}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
           </Row>
           <Row label={t('field.apiKey')}>
             <input
               type="password"
               className={inputClass()}
               placeholder={t('placeholder.providerKey')}
-              value={settings.notesApiKey ?? ''}
-              onChange={(e) => set({ notesApiKey: e.target.value || null })}
+              value={settings.notesApiKeys?.[settings.notesProvider] ?? ''}
+              onChange={(e) =>
+                set({
+                  notesApiKeys: {
+                    ...settings.notesApiKeys,
+                    [settings.notesProvider]: e.target.value || undefined
+                  }
+                })
+              }
             />
           </Row>
         </Section>

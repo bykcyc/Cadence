@@ -66,7 +66,10 @@ export interface AppSettings {
   // Meeting notes (iteration 3).
   notesProvider: NotesProvider
   notesModel: string
+  // Legacy single key (kept for migration). New code reads notesApiKeys[notesProvider].
   notesApiKey: string | null
+  // API key stored per provider, so switching DeepSeek/OpenRouter/Mistral keeps each key.
+  notesApiKeys: Partial<Record<NotesProvider, string>>
   notesPrompt: string
   // Automation: run steps automatically after a recording finishes.
   autoTranscribe: boolean
@@ -88,6 +91,8 @@ export interface AppSettings {
   // Read-aloud (TTS): speak the selected text via Edge online voices.
   ttsEnabled: boolean
   ttsHotkey: HotkeyBinding
+  // 'auto' = detect the voice language from the selected text; otherwise a Locale code.
+  ttsLang: string
   ttsVoice: string
   ttsSpeed: number
   // External integration (iteration 4): local HTTP API for task-bots.

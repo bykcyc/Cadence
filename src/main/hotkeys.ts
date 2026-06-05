@@ -1,5 +1,7 @@
 import { uIOhook, UiohookKey } from 'uiohook-napi'
 import type { HotkeyBinding, HotkeyMode } from '@shared/types'
+import { chordMatches } from './hotkey-match'
+import { log } from './logger'
 
 // `kind` is a generic action id: dictation kinds ('plain'|'polish'|'translate') or 'tts'.
 interface Handlers {
@@ -58,9 +60,18 @@ export function labelForKeys(keys: number[]): string {
 }
 
 // ---- matching ----
+// Right-hand modifiers map to their left equivalents so AltGr / right-Ctrl (common on Windows,
+// where Ctrl+Alt is often reported as Ctrl + *right* Alt) still match a binding stored with the
+// left keycode — the cause of Ctrl+Alt+R / Ctrl+Alt+Space never firing.
+const RIGHT_TO_LEFT: Record<number, number> = {
+  [UiohookKey.CtrlRight]: UiohookKey.Ctrl,
+  [UiohookKey.AltRight]: UiohookKey.Alt,
+  [UiohookKey.ShiftRight]: UiohookKey.Shift,
+  [UiohookKey.MetaRight]: UiohookKey.Meta
+}
+
 function exactMatch(keys: number[]): boolean {
-  if (keys.length === 0 || keys.length !== pressed.size) return false
-  return keys.every((k) => pressed.has(k))
+  return chordMatches(pressed, keys, RIGHT_TO_LEFT)
 }
 
 function recompute(): void {
@@ -69,6 +80,7 @@ function recompute(): void {
     const was = activeKinds.has(kind)
     if (matched && !was) {
       activeKinds.add(kind)
+      log('info', 'hotkey activate:', kind, `(${labelForKeys(binding.keys)})`)
       handlers.onActivate(kind, binding.mode)
     } else if (!matched && was) {
       activeKinds.delete(kind)

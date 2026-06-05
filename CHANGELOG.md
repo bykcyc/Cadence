@@ -4,6 +4,22 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] — 2026-06-05
+
+### Fixed
+- **Read-aloud / Alt hotkeys not firing.** Global hotkeys that use Alt (the default
+  `Ctrl+Alt+R` read-aloud and `Ctrl+Alt+Space` dictate-and-translate) now match correctly
+  when the right Alt / AltGr is used — left and right modifiers are treated as equivalent.
+
+### Added
+- **Read-aloud auto-detects the voice language** from the selected text (Cyrillic → Russian,
+  CJK → Chinese/Japanese, Hangul → Korean, Arabic, Devanagari → Hindi; Latin → your default).
+  A new **Voice language** setting lets you force a specific language or keep Auto-detect.
+- **OpenRouter "Get models"** button in Settings: with your key entered, it fetches the list of
+  available models into a searchable dropdown instead of typing the model id by hand.
+- **API keys are stored per provider** — switching between DeepSeek / OpenRouter / Mistral now
+  keeps each provider's key separately instead of sharing one field. Existing keys are migrated.
+
 ## [0.1.1] — 2026-06-05
 
 ### Added
@@ -38,5 +54,6 @@ First public release.
 - Builds are unsigned, so Windows SmartScreen may warn on first launch (More info → Run anyway).
 - An NVIDIA GPU is recommended; the app falls back to CPU, which works but is slow.
 
+[0.1.2]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.2
 [0.1.1]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.1
 [0.1.0]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.0

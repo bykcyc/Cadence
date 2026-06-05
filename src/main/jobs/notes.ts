@@ -6,6 +6,7 @@ import { getMeeting, writeMeeting, meetingFolder, readArtifact } from '../meetin
 import { getSettings } from '../settings'
 import { segmentsToText } from '../transcript'
 import { formatDateTime } from '@shared/datetime'
+import { currentApiKey } from '@shared/notes'
 import { broadcast } from '../broadcast'
 import { mt } from '../i18n'
 
@@ -31,7 +32,8 @@ export async function runNotes(meetingId: string): Promise<void> {
     if (!meeting) throw new Error('meeting not found')
 
     const settings = getSettings()
-    if (!settings.notesApiKey) {
+    const apiKey = currentApiKey(settings)
+    if (!apiKey) {
       throw new Error(mt('llm.errNoApiKey'))
     }
 
@@ -64,7 +66,7 @@ export async function runNotes(meetingId: string): Promise<void> {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${settings.notesApiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'X-Title': 'Cadence'
       },
       body: JSON.stringify({

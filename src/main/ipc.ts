@@ -105,6 +105,27 @@ export function registerIpc(): void {
   ipcMain.handle(IPC.openExternal, (_e, url: string) => {
     if (typeof url === 'string' && /^https:\/\//i.test(url)) void shell.openExternal(url)
   })
+  // Fetch the list of available models from OpenRouter (validates the key too).
+  ipcMain.handle(
+    IPC.llmGetModels,
+    async (_e, apiKey: string): Promise<{ models?: string[]; error?: string }> => {
+      try {
+        const res = await fetch('https://openrouter.ai/api/v1/models', {
+          headers: apiKey ? { Authorization: `Bearer ${apiKey}` } : {},
+          signal: AbortSignal.timeout(20_000)
+        })
+        if (!res.ok) return { error: `HTTP ${res.status}` }
+        const data = (await res.json()) as { data?: { id?: string }[] }
+        const models = (data.data ?? [])
+          .map((m) => m.id)
+          .filter((id): id is string => typeof id === 'string')
+          .sort()
+        return { models }
+      } catch (e) {
+        return { error: e instanceof Error ? e.message : String(e) }
+      }
+    }
+  )
   ipcMain.handle(IPC.chooseRecordsDir, async () => {
     const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
     const res = await dialog.showOpenDialog(win, {

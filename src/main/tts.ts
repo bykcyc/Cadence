@@ -6,6 +6,7 @@ import { IPC } from '@shared/ipc'
 import type { HotkeyMode } from '@shared/types'
 import { getSettings } from './settings'
 import { ensureTtsPython } from './ml-manager'
+import { resolveVoice } from '@shared/tts-voices'
 import { copySelection } from './inject'
 import { getMainWindow } from './windows'
 import { log } from './logger'
@@ -65,6 +66,7 @@ async function startTts(): Promise<void> {
     inTxt = join(dir, `in-${stamp}.txt`)
     outMp3 = join(dir, `out-${stamp}.mp3`)
     const s = getSettings()
+    const voice = resolveVoice(s.ttsLang, text) // 'auto' → detect from text; else the chosen language
     await writeFile(inTxt, text, 'utf8')
 
     await new Promise<void>((resolve) => {
@@ -76,7 +78,7 @@ async function startTts(): Promise<void> {
           '--file',
           inTxt,
           '--voice',
-          s.ttsVoice,
+          voice,
           `--rate=${speedToRate(s.ttsSpeed)}`,
           '--write-media',
           outMp3

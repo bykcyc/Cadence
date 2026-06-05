@@ -145,6 +145,11 @@ export function resolveLocale(setting: LanguageSetting, systemLocale: string): L
 type Dict = Record<string, string>
 
 const en: Dict = {
+  'field.ttsLang': "Voice language",
+  'tts.langAuto': "Auto-detect",
+  'field.getModels': "Get models",
+  'llm.modelsLoaded': "{n} models loaded",
+  'llm.modelsError': "Couldn't load models",
   'nav.recordings': 'Recordings',
   'nav.settings': 'Settings',
   'sidebar.openFolder': 'Open recordings folder',
@@ -344,6 +349,11 @@ const en: Dict = {
 }
 
 const ru: Dict = {
+  'field.ttsLang': "Язык озвучки",
+  'tts.langAuto': "Авто-определение",
+  'field.getModels': "Получить модели",
+  'llm.modelsLoaded': "Загружено моделей: {n}",
+  'llm.modelsError': "Не удалось загрузить модели",
   'nav.recordings': 'Записи',
   'nav.settings': 'Настройки',
   'sidebar.openFolder': 'Открыть папку записей',
@@ -544,6 +554,11 @@ const ru: Dict = {
 }
 
 const zh: Dict = {
+  'field.ttsLang': "语音语言",
+  'tts.langAuto': "自动检测",
+  'field.getModels': "获取模型",
+  'llm.modelsLoaded': "已加载 {n} 个模型",
+  'llm.modelsError': "无法加载模型",
   'kind.translate': "翻译",
   'common.error': "错误",
   'error.noAudio': "无法采集麦克风或系统声音",
@@ -739,6 +754,11 @@ const zh: Dict = {
 }
 
 const es: Dict = {
+  'field.ttsLang': "Idioma de la voz",
+  'tts.langAuto': "Detección automática",
+  'field.getModels': "Obtener modelos",
+  'llm.modelsLoaded': "{n} modelos cargados",
+  'llm.modelsError': "No se pudieron cargar los modelos",
   'kind.translate': "Traducción",
   'common.error': "Error",
   'error.noAudio': "No se pudo capturar ni el micrófono ni el audio del sistema",
@@ -935,6 +955,11 @@ const es: Dict = {
 }
 
 const fr: Dict = {
+  'field.ttsLang': "Langue de la voix",
+  'tts.langAuto': "Détection automatique",
+  'field.getModels': "Obtenir les modèles",
+  'llm.modelsLoaded': "{n} modèles chargés",
+  'llm.modelsError': "Impossible de charger les modèles",
   'kind.translate': "Traduction",
   'common.error': "Erreur",
   'error.noAudio': "Impossible de capturer le microphone ou l’audio système",
@@ -1131,6 +1156,11 @@ const fr: Dict = {
 }
 
 const de: Dict = {
+  'field.ttsLang': "Sprache der Stimme",
+  'tts.langAuto': "Automatisch erkennen",
+  'field.getModels': "Modelle abrufen",
+  'llm.modelsLoaded': "{n} Modelle geladen",
+  'llm.modelsError': "Modelle konnten nicht geladen werden",
   'kind.translate': "Übersetzung",
   'common.error': "Fehler",
   'error.noAudio': "Weder das Mikrofon noch das Systemaudio konnten erfasst werden",
@@ -1327,6 +1357,11 @@ const de: Dict = {
 }
 
 const pt: Dict = {
+  'field.ttsLang': "Idioma da voz",
+  'tts.langAuto': "Detecção automática",
+  'field.getModels': "Obter modelos",
+  'llm.modelsLoaded': "{n} modelos carregados",
+  'llm.modelsError': "Não foi possível carregar os modelos",
   'kind.translate': "Tradução",
   'common.error': "Erro",
   'error.noAudio': "Não foi possível capturar o microfone nem o áudio do sistema",
@@ -1523,6 +1558,11 @@ const pt: Dict = {
 }
 
 const it: Dict = {
+  'field.ttsLang': "Lingua della voce",
+  'tts.langAuto': "Rilevamento automatico",
+  'field.getModels': "Ottieni modelli",
+  'llm.modelsLoaded': "{n} modelli caricati",
+  'llm.modelsError': "Impossibile caricare i modelli",
   'kind.translate': "Traduzione",
   'common.error': "Errore",
   'error.noAudio': "Impossibile acquisire né il microfono né l'audio di sistema",
@@ -1719,6 +1759,11 @@ const it: Dict = {
 }
 
 const ja: Dict = {
+  'field.ttsLang': "音声の言語",
+  'tts.langAuto': "自動検出",
+  'field.getModels': "モデルを取得",
+  'llm.modelsLoaded': "{n} 個のモデルを読み込みました",
+  'llm.modelsError': "モデルを読み込めませんでした",
   'kind.translate': "翻訳",
   'common.error': "エラー",
   'error.noAudio': "マイクとシステム音声のいずれも取得できませんでした",
@@ -1914,6 +1959,11 @@ const ja: Dict = {
 }
 
 const ko: Dict = {
+  'field.ttsLang': "음성 언어",
+  'tts.langAuto': "자동 감지",
+  'field.getModels': "모델 가져오기",
+  'llm.modelsLoaded': "{n}개 모델 불러옴",
+  'llm.modelsError': "모델을 불러오지 못했습니다",
   'kind.translate': "번역",
   'common.error': "오류",
   'error.noAudio': "마이크 또는 시스템 오디오를 캡처할 수 없습니다",
@@ -2109,6 +2159,11 @@ const ko: Dict = {
 }
 
 const ar: Dict = {
+  'field.ttsLang': "لغة الصوت",
+  'tts.langAuto': "كشف تلقائي",
+  'field.getModels': "جلب النماذج",
+  'llm.modelsLoaded': "تم تحميل {n} نموذجًا",
+  'llm.modelsError': "تعذّر تحميل النماذج",
   'kind.translate': "الترجمة",
   'common.error': "خطأ",
   'error.noAudio': "تعذّر التقاط الميكروفون أو صوت النظام",
@@ -2304,6 +2359,11 @@ const ar: Dict = {
 }
 
 const hi: Dict = {
+  'field.ttsLang': "आवाज़ की भाषा",
+  'tts.langAuto': "स्वतः पहचान",
+  'field.getModels': "मॉडल प्राप्त करें",
+  'llm.modelsLoaded': "{n} मॉडल लोड हुए",
+  'llm.modelsError': "मॉडल लोड नहीं हो सके",
   'kind.translate': "अनुवाद",
   'common.error': "त्रुटि",
   'error.noAudio': "न तो माइक्रोफ़ोन और न ही सिस्टम ऑडियो कैप्चर कर सका",
@@ -2499,6 +2559,11 @@ const hi: Dict = {
 }
 
 const tr: Dict = {
+  'field.ttsLang': "Ses dili",
+  'tts.langAuto': "Otomatik algıla",
+  'field.getModels': "Modelleri getir",
+  'llm.modelsLoaded': "{n} model yüklendi",
+  'llm.modelsError': "Modeller yüklenemedi",
   'kind.translate': "Çeviri",
   'common.error': "Hata",
   'error.noAudio': "Mikrofon veya sistem sesi yakalanamadı",
@@ -2695,6 +2760,11 @@ const tr: Dict = {
 }
 
 const pl: Dict = {
+  'field.ttsLang': "Język głosu",
+  'tts.langAuto': "Automatyczne wykrywanie",
+  'field.getModels': "Pobierz modele",
+  'llm.modelsLoaded': "Załadowano modeli: {n}",
+  'llm.modelsError': "Nie udało się pobrać modeli",
   'kind.translate': "Tłumaczenie",
   'common.error': "Błąd",
   'error.noAudio': "Nie udało się przechwycić ani mikrofonu, ani dźwięku systemowego",

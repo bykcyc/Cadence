@@ -1,3 +1,10 @@
+import type { AppSettings } from './types'
+
+/** The API key for the currently-selected LLM provider (per-provider storage). */
+export function currentApiKey(s: AppSettings): string | null {
+  return s.notesApiKeys?.[s.notesProvider] ?? null
+}
+
 export const DEFAULT_NOTES_PROMPT = `You are an assistant that writes clear, well-structured notes for a work meeting.
 
 Based on the transcript below, prepare:

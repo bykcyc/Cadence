@@ -76,6 +76,10 @@ const api = {
     openLogs: (): Promise<void> => ipcRenderer.invoke(IPC.openLogs),
     openExternal: (url: string): Promise<void> => ipcRenderer.invoke(IPC.openExternal, url)
   },
+  llm: {
+    getModels: (apiKey: string): Promise<{ models?: string[]; error?: string }> =>
+      ipcRenderer.invoke(IPC.llmGetModels, apiKey)
+  },
   // Live audio levels during recording / mic test (main -> renderer).
   onLevel: (cb: (level: LevelUpdate) => void): (() => void) => {
     const listener = (_e: unknown, level: LevelUpdate): void => cb(level)

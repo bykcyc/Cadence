@@ -33,6 +33,7 @@ export function initSettings(): void {
       notesProvider: 'deepseek',
       notesModel: 'deepseek-v4-flash',
       notesApiKey: null,
+      notesApiKeys: {},
       notesPrompt: DEFAULT_NOTES_PROMPT,
       autoTranscribe: false,
       autoDiarize: false,
@@ -66,6 +67,7 @@ export function initSettings(): void {
         mode: 'toggle',
         label: 'Ctrl + Alt + R'
       },
+      ttsLang: 'auto',
       ttsVoice: 'ru-RU-SvetlanaNeural',
       ttsSpeed: 1.0,
       localApiEnabled: true,
@@ -73,6 +75,16 @@ export function initSettings(): void {
       onboardingDone: false
     }
   })
+  // Migrate the legacy single API key into the per-provider map, then clear it so this runs
+  // only ONCE. Otherwise, after the user deletes their last per-provider key (which empties the
+  // map back to {}), the next launch would re-migrate and resurrect the deleted key.
+  const legacyKey = store.get('notesApiKey')
+  if (legacyKey) {
+    if (Object.keys(store.get('notesApiKeys') ?? {}).length === 0) {
+      store.set('notesApiKeys', { [store.get('notesProvider')]: legacyKey })
+    }
+    store.set('notesApiKey', null)
+  }
 }
 
 export function getSettings(): AppSettings {

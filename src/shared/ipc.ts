@@ -10,6 +10,7 @@ export const IPC = {
   copyText: 'app:copyText',
   openLogs: 'app:openLogs',
   openExternal: 'app:openExternal', // open an https URL in the default browser
+  llmGetModels: 'llm:getModels', // (apiKey) -> string[] of OpenRouter model ids
 
   // recording control (UI/tray -> main orchestrator)
   recordingGet: 'recording:get',

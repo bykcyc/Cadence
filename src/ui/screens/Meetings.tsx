@@ -17,6 +17,7 @@ import {
   Trash2
 } from 'lucide-react'
 import type { JobKind, Meeting, TranscriptFile, TranscriptSegment } from '@shared/types'
+import { currentApiKey } from '@shared/notes'
 import { useApp, jobKey } from '../state/app'
 import { formatDuration, formatDateTime, formatRelativeDay } from '../lib/format'
 import { mediaUrl } from '../lib/media'
@@ -555,7 +556,7 @@ function NotesSection({ meeting }: { meeting: Meeting }): ReactNode {
           title={
             !hasTranscript
               ? t('tip.needTranscript')
-              : !settings?.notesApiKey
+              : !(settings && currentApiKey(settings))
                 ? t('notes.needApiKey')
                 : ''
           }

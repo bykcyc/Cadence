@@ -1,5 +1,6 @@
 import { getSettings } from '../settings'
 import type { NotesProvider } from '@shared/types'
+import { currentApiKey } from '@shared/notes'
 import { mt } from '../i18n'
 
 const ENDPOINTS: Record<NotesProvider, string> = {
@@ -16,7 +17,8 @@ export async function chatComplete(
   opts: { temperature?: number; system?: string; maxTokens?: number } = {}
 ): Promise<string> {
   const s = getSettings()
-  if (!s.notesApiKey) throw new Error(mt('llm.errNoApiKey'))
+  const apiKey = currentApiKey(s)
+  if (!apiKey) throw new Error(mt('llm.errNoApiKey'))
   const messages = opts.system
     ? [
         { role: 'system', content: opts.system },
@@ -27,7 +29,7 @@ export async function chatComplete(
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${s.notesApiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'X-Title': 'Cadence'
     },
     body: JSON.stringify({
