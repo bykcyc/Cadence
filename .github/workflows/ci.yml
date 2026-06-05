@@ -58,9 +58,11 @@ jobs:
 
             ### First run
             On the first transcription, Cadence sets up its local engine automatically (installs `uv`,
-            a Python environment, PyTorch + the models). An **NVIDIA GPU is recommended** — it falls
-            back to CPU, which works but is slow. For AI notes / dictation polish & translate you add
-            your own API key; speaker diarization needs a free Hugging Face token.
+            a Python environment, and the speech model). The default is the lightweight **ONNX** engine
+            (no PyTorch, ~1 GB) which runs on the CPU. Switch to **NeMo** in *Settings → Recording* for
+            GPU-accelerated transcription of long meetings — it then pulls PyTorch (CUDA) + the full ML
+            stack (~2–4 GB). For AI notes / dictation polish & translate you add your own API key;
+            speaker diarization needs a free Hugging Face token (and uses the NeMo engine).
 
             > The build is **unsigned**, so Windows SmartScreen may warn on first launch →
             > **More info → Run anyway**.
