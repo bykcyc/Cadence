@@ -36,6 +36,9 @@ export async function runNotes(meetingId: string): Promise<void> {
     if (!apiKey) {
       throw new Error(mt('llm.errNoApiKey'))
     }
+    if (!settings.notesModel?.trim()) {
+      throw new Error(mt('llm.errNoModel'))
+    }
 
     // Prefer the diarized transcript, fall back to the plain one.
     const rel =

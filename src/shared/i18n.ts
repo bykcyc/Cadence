@@ -145,6 +145,7 @@ export function resolveLocale(setting: LanguageSetting, systemLocale: string): L
 type Dict = Record<string, string>
 
 const en: Dict = {
+  'llm.errNoModel': "No model selected (Settings → LLM provider)",
   'field.ttsLang': "Voice language",
   'tts.langAuto': "Auto-detect",
   'field.getModels': "Get models",
@@ -349,6 +350,7 @@ const en: Dict = {
 }
 
 const ru: Dict = {
+  'llm.errNoModel': "Не выбрана модель (Настройки → LLM-провайдер)",
   'field.ttsLang': "Язык озвучки",
   'tts.langAuto': "Авто-определение",
   'field.getModels': "Получить модели",
@@ -554,6 +556,7 @@ const ru: Dict = {
 }
 
 const zh: Dict = {
+  'llm.errNoModel': "未选择模型（设置 → LLM 提供商）",
   'field.ttsLang': "语音语言",
   'tts.langAuto': "自动检测",
   'field.getModels': "获取模型",
@@ -754,6 +757,7 @@ const zh: Dict = {
 }
 
 const es: Dict = {
+  'llm.errNoModel': "No se ha seleccionado un modelo (Ajustes → Proveedor de LLM)",
   'field.ttsLang': "Idioma de la voz",
   'tts.langAuto': "Detección automática",
   'field.getModels': "Obtener modelos",
@@ -955,6 +959,7 @@ const es: Dict = {
 }
 
 const fr: Dict = {
+  'llm.errNoModel': "Aucun modèle sélectionné (Paramètres → Fournisseur LLM)",
   'field.ttsLang': "Langue de la voix",
   'tts.langAuto': "Détection automatique",
   'field.getModels': "Obtenir les modèles",
@@ -1156,6 +1161,7 @@ const fr: Dict = {
 }
 
 const de: Dict = {
+  'llm.errNoModel': "Kein Modell ausgewählt (Einstellungen → LLM-Anbieter)",
   'field.ttsLang': "Sprache der Stimme",
   'tts.langAuto': "Automatisch erkennen",
   'field.getModels': "Modelle abrufen",
@@ -1357,6 +1363,7 @@ const de: Dict = {
 }
 
 const pt: Dict = {
+  'llm.errNoModel': "Nenhum modelo selecionado (Definições → Provedor de LLM)",
   'field.ttsLang': "Idioma da voz",
   'tts.langAuto': "Detecção automática",
   'field.getModels': "Obter modelos",
@@ -1558,6 +1565,7 @@ const pt: Dict = {
 }
 
 const it: Dict = {
+  'llm.errNoModel': "Nessun modello selezionato (Impostazioni → Provider LLM)",
   'field.ttsLang': "Lingua della voce",
   'tts.langAuto': "Rilevamento automatico",
   'field.getModels': "Ottieni modelli",
@@ -1759,6 +1767,7 @@ const it: Dict = {
 }
 
 const ja: Dict = {
+  'llm.errNoModel': "モデルが選択されていません（設定 → LLM プロバイダー）",
   'field.ttsLang': "音声の言語",
   'tts.langAuto': "自動検出",
   'field.getModels': "モデルを取得",
@@ -1959,6 +1968,7 @@ const ja: Dict = {
 }
 
 const ko: Dict = {
+  'llm.errNoModel': "모델이 선택되지 않았습니다 (설정 → LLM 공급자)",
   'field.ttsLang': "음성 언어",
   'tts.langAuto': "자동 감지",
   'field.getModels': "모델 가져오기",
@@ -2159,6 +2169,7 @@ const ko: Dict = {
 }
 
 const ar: Dict = {
+  'llm.errNoModel': "لم يتم اختيار نموذج (الإعدادات ← مزود LLM)",
   'field.ttsLang': "لغة الصوت",
   'tts.langAuto': "كشف تلقائي",
   'field.getModels': "جلب النماذج",
@@ -2359,6 +2370,7 @@ const ar: Dict = {
 }
 
 const hi: Dict = {
+  'llm.errNoModel': "कोई मॉडल चयनित नहीं (सेटिंग्स → LLM प्रदाता)",
   'field.ttsLang': "आवाज़ की भाषा",
   'tts.langAuto': "स्वतः पहचान",
   'field.getModels': "मॉडल प्राप्त करें",
@@ -2559,6 +2571,7 @@ const hi: Dict = {
 }
 
 const tr: Dict = {
+  'llm.errNoModel': "Model seçilmedi (Ayarlar → LLM sağlayıcı)",
   'field.ttsLang': "Ses dili",
   'tts.langAuto': "Otomatik algıla",
   'field.getModels': "Modelleri getir",
@@ -2760,6 +2773,7 @@ const tr: Dict = {
 }
 
 const pl: Dict = {
+  'llm.errNoModel': "Nie wybrano modelu (Ustawienia → Dostawca LLM)",
   'field.ttsLang': "Język głosu",
   'tts.langAuto': "Automatyczne wykrywanie",
   'field.getModels': "Pobierz modele",

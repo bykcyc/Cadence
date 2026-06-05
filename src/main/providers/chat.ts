@@ -19,6 +19,7 @@ export async function chatComplete(
   const s = getSettings()
   const apiKey = currentApiKey(s)
   if (!apiKey) throw new Error(mt('llm.errNoApiKey'))
+  if (!s.notesModel?.trim()) throw new Error(mt('llm.errNoModel'))
   const messages = opts.system
     ? [
         { role: 'system', content: opts.system },

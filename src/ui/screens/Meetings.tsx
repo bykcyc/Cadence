@@ -548,7 +548,11 @@ function NotesSection({ meeting }: { meeting: Meeting }): ReactNode {
         <div className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-200">
           <StickyNote className="h-4 w-4 text-accent-500" />
           {t('notes.title')}
-          {n.model && <span className="text-xs font-normal text-neutral-400">{n.model}</span>}
+          {/* Show the currently-configured model (updates when you change provider/model),
+              not the historical artifact model that produced the existing notes. */}
+          {settings?.notesModel && (
+            <span className="text-xs font-normal text-neutral-400">{settings.notesModel}</span>
+          )}
         </div>
         <Button
           variant="primary"
