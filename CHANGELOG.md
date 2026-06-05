@@ -4,6 +4,14 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] — 2026-06-05
+
+### Fixed
+- **Transcription no longer fails with "fetch failed" on the second track.** The local ASR
+  worker can hard-crash on a back-to-back transcribe call (a CUDA/NeMo bug on Windows — a fresh
+  worker always handles its first call fine). The app now detects the dropped worker, restarts
+  it, and retries the request once, so a meeting's mic + system tracks both transcribe.
+
 ## [0.1.3] — 2026-06-05
 
 ### Fixed
@@ -68,6 +76,7 @@ First public release.
 - Builds are unsigned, so Windows SmartScreen may warn on first launch (More info → Run anyway).
 - An NVIDIA GPU is recommended; the app falls back to CPU, which works but is slow.
 
+[0.1.4]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.4
 [0.1.3]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.3
 [0.1.2]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.2
 [0.1.1]: https://github.com/bykcyc/Cadence/releases/tag/v0.1.1

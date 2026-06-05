@@ -287,19 +287,41 @@ export function ensureReady(): Promise<string> {
   return readyPromise
 }
 
-async function post<T>(path: string, body: unknown, timeoutMs = 600_000): Promise<T> {
+/** A dropped connection (vs. an HTTP error or a timeout) — i.e. the worker process died. */
+function isWorkerDown(e: unknown): boolean {
+  if (!(e instanceof Error)) return false
+  if (e.name === 'TimeoutError' || e.name === 'AbortError') return false // genuine timeout, not a crash
+  const cause = (e as { cause?: { code?: string } }).cause?.code ?? ''
+  return /fetch failed|ECONNREFUSED|ECONNRESET|socket hang up|terminated|other side closed/i.test(
+    `${e.message} ${cause}`
+  )
+}
+
+async function post<T>(path: string, body: unknown, timeoutMs = 600_000, canRetry = true): Promise<T> {
   const baseUrl = await ensureReady()
-  const res = await fetch(`${baseUrl}${path}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(timeoutMs)
-  })
-  if (!res.ok) {
-    const detail = await res.text().catch(() => '')
-    throw new Error(`worker ${path} failed: ${res.status} ${detail}`)
+  try {
+    const res = await fetch(`${baseUrl}${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(timeoutMs)
+    })
+    if (!res.ok) {
+      const detail = await res.text().catch(() => '')
+      throw new Error(`worker ${path} failed: ${res.status} ${detail}`)
+    }
+    return (await res.json()) as T
+  } catch (e) {
+    // The NeMo ASR worker can hard-crash on a back-to-back transcribe call (a CUDA/Lhotse bug on
+    // Windows — a fresh worker always handles its first call fine). Recover transparently: stop the
+    // dead worker and retry the request once, which respawns it and runs on the fresh process.
+    if (canRetry && isWorkerDown(e)) {
+      log('warn', `ml worker connection lost on ${path} — restarting worker and retrying once`)
+      stopWorker()
+      return post<T>(path, body, timeoutMs, false)
+    }
+    throw e
   }
-  return (await res.json()) as T
 }
 
 export interface TranscribeResult {
