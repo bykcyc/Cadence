@@ -13,6 +13,7 @@ os.environ.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 
 import argparse
+import gc
 import logging
 import math
 import re
@@ -180,6 +181,10 @@ def transcribe(req: TranscribeReq):
             if text:
                 all_text.append(text)
             all_words.extend(_reconstruct_words(r, i * ASR_CHUNK_SECONDS))
+            # Reclaim onnxruntime's per-call buffers each chunk — without this the worker grows
+            # and dies partway through a long (e.g. 84-min / 42-chunk) file.
+            del r
+            gc.collect()
         except Exception as e:  # noqa: BLE001
             logging.warning("transcribe chunk %d failed: %s", i + 1, e)
         finally:
