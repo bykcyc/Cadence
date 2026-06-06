@@ -78,7 +78,8 @@ export async function runNotes(meetingId: string): Promise<void> {
         temperature: 0.3,
         stream: false
       }),
-      signal: AbortSignal.timeout(180_000)
+      // Long meetings make a big prompt (whole transcript), so allow plenty of time.
+      signal: AbortSignal.timeout(600_000)
     })
 
     if (!res.ok) {
@@ -107,7 +108,10 @@ export async function runNotes(meetingId: string): Promise<void> {
     broadcast(IPC.meetingsChangedEvent)
     progress(meetingId, 'done', mt('job.done'))
   } catch (e) {
-    const message = e instanceof Error ? e.message : String(e)
+    let message = e instanceof Error ? e.message : String(e)
+    if (e instanceof Error && (e.name === 'TimeoutError' || /abort|timeout/i.test(e.message))) {
+      message = mt('llm.errTimeout')
+    }
     const m = await getMeeting(meetingId)
     if (m) {
       m.artifacts.notes = { ...m.artifacts.notes, status: 'error', error: message }

@@ -90,12 +90,13 @@ export async function runTranscription(meetingId: string, diarize: boolean): Pro
     const { mic, system, mixed } = meeting.audio
     const language: string | null = meeting.language
 
-    // ASR is the slow part, so its word-level result is cached per meeting. Clicking "By speakers"
-    // (or "Redo") then reuses the existing transcription and only re-runs diarization — no second
-    // ASR pass. The recording is immutable, so the cache stays valid.
+    // ASR is the slow part. Its word-level result is cached per meeting so that "By speakers"
+    // (diarize) can reuse it and skip a second ASR pass — that's the only place the cache is read.
+    // The plain "Transcript" (incl. "Redo") ALWAYS re-runs ASR (so Redo does real, visible work)
+    // and refreshes the cache for any later diarization.
     const wordsCache = join(folder, 'asr-words.json')
     let cachedWords: Word[] | null = null
-    if (existsSync(wordsCache)) {
+    if (diarize && existsSync(wordsCache)) {
       try {
         const w = JSON.parse(await readFile(wordsCache, 'utf8')).words
         if (Array.isArray(w) && w.length) cachedWords = w as Word[]

@@ -4,6 +4,17 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.3] — 2026-06-06
+
+### Fixed
+- **"Redo" on the transcript actually re-runs recognition again.** In 0.2.2 it instantly reused the
+  cached result and looked like nothing happened. The ASR cache is now reused only by **"By
+  speakers"** (diarization) — where skipping a second recognition pass is the whole point — while
+  the plain transcript (and Redo) always re-runs ASR and refreshes the cache.
+- **Meeting notes no longer fail with a timeout on long meetings.** A long transcript makes a large
+  prompt; the LLM request timeout was raised (3 → 10 min) and, if it still times out, the error now
+  explains the likely cause (transcript too long / slow provider) instead of a cryptic message.
+
 ## [0.2.2] — 2026-06-06
 
 ### Changed
