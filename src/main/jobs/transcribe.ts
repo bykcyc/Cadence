@@ -1,5 +1,6 @@
 import { join } from 'node:path'
-import { writeFile, rm } from 'node:fs/promises'
+import { writeFile, rm, readFile } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
 import { IPC } from '@shared/ipc'
 import type { ArtifactStatus, JobKind, Meeting, TranscriptFile, TranscriptSegment } from '@shared/types'
 import { getMeeting, writeMeeting, meetingFolder } from '../meetings'
@@ -11,7 +12,8 @@ import {
   groupTaggedWords,
   groupWords,
   normalizeDiarSegments,
-  segmentsToText
+  segmentsToText,
+  type Word
 } from '../transcript'
 import { broadcast } from '../broadcast'
 import { log } from '../logger'
@@ -88,26 +90,50 @@ export async function runTranscription(meetingId: string, diarize: boolean): Pro
     const { mic, system, mixed } = meeting.audio
     const language: string | null = meeting.language
 
-    // ONE stream for ASR. Transcription works on a single mixed stream — the whole conversation on
-    // one timeline — rather than per-track. (Per-track me/them only worked with headphones; when the
-    // mic also caught the other side it produced overlapping, out-of-order text. Speaker labels come
-    // from diarization instead.) Prefer the saved mix; else mix the two tracks; else the lone track.
-    const asrWav = join(folder, '_asr16.wav')
-    temps.push(asrWav)
-    if (mixed) {
-      await toMono16kWav(join(folder, mixed), asrWav)
-    } else if (mic && system) {
-      await mixToMono16kWav(join(folder, mic), join(folder, system), asrWav)
-    } else if (mic || system) {
-      await toMono16kWav(join(folder, (mic ?? system) as string), asrWav)
-    } else {
-      throw new Error('meeting has no audio')
+    // ASR is the slow part, so its word-level result is cached per meeting. Clicking "By speakers"
+    // (or "Redo") then reuses the existing transcription and only re-runs diarization — no second
+    // ASR pass. The recording is immutable, so the cache stays valid.
+    const wordsCache = join(folder, 'asr-words.json')
+    let cachedWords: Word[] | null = null
+    if (existsSync(wordsCache)) {
+      try {
+        const w = JSON.parse(await readFile(wordsCache, 'utf8')).words
+        if (Array.isArray(w) && w.length) cachedWords = w as Word[]
+      } catch {
+        /* corrupt cache → just re-transcribe below */
+      }
     }
 
-    const msg = mt('job.recognize')
-    progress(meetingId, kind, 'running', msg, 0)
-    const r = await transcribeAudio(asrWav, (v) => progress(meetingId, kind, 'running', msg, v))
-    const words = r.words
+    // The 16 kHz mono WAV is needed when ASR hasn't run yet, or when diarizing (pyannote reads it).
+    // ONE stream — the whole conversation on one timeline: prefer the saved mix; else mix the two
+    // tracks; else the lone track. (Per-track me/them only worked with headphones; the mix is robust.)
+    let asrWav: string | null = null
+    if (!cachedWords || diarize) {
+      asrWav = join(folder, '_asr16.wav')
+      temps.push(asrWav)
+      if (mixed) {
+        await toMono16kWav(join(folder, mixed), asrWav)
+      } else if (mic && system) {
+        await mixToMono16kWav(join(folder, mic), join(folder, system), asrWav)
+      } else if (mic || system) {
+        await toMono16kWav(join(folder, (mic ?? system) as string), asrWav)
+      } else {
+        throw new Error('meeting has no audio')
+      }
+    }
+
+    let words: Word[]
+    if (cachedWords) {
+      words = cachedWords
+    } else {
+      const msg = mt('job.recognize')
+      progress(meetingId, kind, 'running', msg, 0)
+      const r = await transcribeAudio(asrWav as string, (v) =>
+        progress(meetingId, kind, 'running', msg, v)
+      )
+      words = r.words
+      await writeFile(wordsCache, JSON.stringify({ v: 1, words }), 'utf8').catch(() => {})
+    }
 
     let segments: TranscriptSegment[]
     const usedSpeakers = new Set<string>()
@@ -115,6 +141,7 @@ export async function runTranscription(meetingId: string, diarize: boolean): Pro
     if (diarize) {
       // Separate speakers by voice (pyannote) on the SAME mixed stream → who-said-what.
       // No hard token requirement — once the gated model is cached it loads without one.
+      if (!asrWav) throw new Error('no audio for diarization')
       const hfToken = settings.hfToken
       progress(meetingId, kind, 'running', mt('job.diarizing'))
       const diar = await diarizeAudio(asrWav, hfToken ?? '')
