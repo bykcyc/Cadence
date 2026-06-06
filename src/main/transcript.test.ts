@@ -2,11 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   groupWords,
   normalizeDiarSegments,
-  groupWordsByDiarization,
   groupTaggedWords,
-  tracksBleed,
-  buildPlainSegments,
-  mergeSegments,
   segmentsToText
 } from './transcript'
 
@@ -18,15 +14,15 @@ describe('groupWords', () => {
         { start: 0.6, end: 1.0, word: 'world' },
         { start: 5.0, end: 5.4, word: 'again' } // > 1.2s gap → new utterance
       ],
-      'me'
+      'speaker'
     )
     expect(segs).toHaveLength(2)
-    expect(segs[0]).toMatchObject({ speaker: 'me', text: 'hello world', start: 0, end: 1.0 })
+    expect(segs[0]).toMatchObject({ speaker: 'speaker', text: 'hello world', start: 0, end: 1.0 })
     expect(segs[1].text).toBe('again')
   })
 
   it('returns nothing for empty input', () => {
-    expect(groupWords([], 'me')).toEqual([])
+    expect(groupWords([], 'speaker')).toEqual([])
   })
 })
 
@@ -43,90 +39,35 @@ describe('normalizeDiarSegments', () => {
   })
 })
 
-describe('groupWordsByDiarization', () => {
-  it('assigns each word to the most-overlapping speaker and splits on speaker change', () => {
-    const diar = [
-      { start: 0, end: 2, speaker: 'spk_1' },
-      { start: 2, end: 4, speaker: 'spk_2' }
-    ]
-    const segs = groupWordsByDiarization(
-      [
-        { start: 0.1, end: 0.5, word: 'a' },
-        { start: 0.6, end: 1.0, word: 'b' },
-        { start: 2.1, end: 2.5, word: 'c' }
-      ],
-      diar
-    )
-    expect(segs).toHaveLength(2)
-    expect(segs[0]).toMatchObject({ speaker: 'spk_1', text: 'a b' })
-    expect(segs[1]).toMatchObject({ speaker: 'spk_2', text: 'c' })
-  })
-})
-
-describe('groupTaggedWords (turn interleave)', () => {
-  it('interleaves two tracks by time, splitting on speaker change', () => {
+describe('groupTaggedWords (diarized turn interleave)', () => {
+  it('groups words by time, splitting on speaker change', () => {
     const segs = groupTaggedWords([
-      { start: 0.0, end: 0.4, word: 'hi', speaker: 'them' },
-      { start: 0.5, end: 0.9, word: 'yo', speaker: 'me' },
-      { start: 1.0, end: 1.4, word: 'sup', speaker: 'them' }
+      { start: 0.0, end: 0.4, word: 'hi', speaker: 'spk_1' },
+      { start: 0.5, end: 0.9, word: 'yo', speaker: 'spk_2' },
+      { start: 1.0, end: 1.4, word: 'sup', speaker: 'spk_1' }
     ])
-    expect(segs.map((s) => `${s.speaker}:${s.text}`)).toEqual(['them:hi', 'me:yo', 'them:sup'])
+    expect(segs.map((s) => `${s.speaker}:${s.text}`)).toEqual(['spk_1:hi', 'spk_2:yo', 'spk_1:sup'])
+  })
+
+  it('sorts out-of-order words by start time', () => {
+    const segs = groupTaggedWords([
+      { start: 0.6, end: 1.0, word: 'b', speaker: 'spk_1' },
+      { start: 0.0, end: 0.4, word: 'a', speaker: 'spk_1' }
+    ])
+    expect(segs[0].text).toBe('a b')
   })
 })
 
-describe('tracksBleed', () => {
-  it('false for clean alternating tracks (no overlap)', () => {
-    const mic = [
-      { start: 0, end: 2, word: 'a' },
-      { start: 6, end: 8, word: 'b' }
-    ]
-    const system = [{ start: 3, end: 5, word: 'c' }]
-    expect(tracksBleed(mic, system)).toBe(false)
-  })
-  it('true when both tracks cover the same span (mic caught both voices)', () => {
-    const mic = [{ start: 0, end: 100, word: 'x' }]
-    const system = [{ start: 0, end: 100, word: 'y' }]
-    expect(tracksBleed(mic, system)).toBe(true)
-  })
-})
-
-describe('buildPlainSegments (auto)', () => {
-  it('clean tracks → interleaved me/them in correct order', () => {
-    const { segments, speakers } = buildPlainSegments(
-      [{ start: 3, end: 4, word: 'mine' }],
-      [{ start: 0, end: 1, word: 'theirs' }]
-    )
-    expect(speakers.sort()).toEqual(['me', 'them'])
-    expect(segments.map((s) => `${s.speaker}:${s.text}`)).toEqual(['them:theirs', 'me:mine'])
-  })
-  it('bleed → one neutral chronological stream', () => {
-    const { segments, speakers } = buildPlainSegments(
-      [{ start: 0, end: 100, word: 'x' }],
-      [{ start: 0, end: 100, word: 'y' }]
-    )
-    expect(speakers).toEqual(['speaker'])
-    expect(segments.every((s) => s.speaker === 'speaker')).toBe(true)
-  })
-})
-
-describe('mergeSegments + segmentsToText', () => {
-  it('merges two tracks chronologically', () => {
-    const merged = mergeSegments(
-      [{ speaker: 'me', start: 0, end: 1, text: 'hi' }],
-      [{ speaker: 'spk_1', start: 0.5, end: 1.5, text: 'yo' }]
-    )
-    expect(merged.map((s) => s.text)).toEqual(['hi', 'yo'])
-  })
-
+describe('segmentsToText', () => {
   it('renders segments with their speaker labels', () => {
     const txt = segmentsToText(
       [
-        { speaker: 'me', start: 0, end: 1, text: 'hi' },
-        { speaker: 'spk_1', start: 1, end: 2, text: 'yo' }
+        { speaker: 'spk_1', start: 0, end: 1, text: 'hi' },
+        { speaker: 'spk_2', start: 1, end: 2, text: 'yo' }
       ],
-      { me: 'Me', spk_1: 'Alice' }
+      { spk_1: 'Alice', spk_2: 'Bob' }
     )
-    expect(txt).toBe('Me: hi\nAlice: yo')
+    expect(txt).toBe('Alice: hi\nBob: yo')
   })
 
   it('falls back to the raw speaker id when no label is set', () => {

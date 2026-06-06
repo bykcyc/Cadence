@@ -49,6 +49,32 @@ export async function transcodeToFlac(input: string, output: string): Promise<vo
   ])
 }
 
+/** Mix two tracks AND downsample to 16 kHz mono in one pass — the single stream we transcribe
+ *  when a recording has no pre-mixed file saved. */
+export async function mixToMono16kWav(
+  micInput: string,
+  systemInput: string,
+  output: string
+): Promise<void> {
+  await run(ffmpegPath(), [
+    '-y',
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-i',
+    micInput,
+    '-i',
+    systemInput,
+    '-filter_complex',
+    'amix=inputs=2:duration=longest:normalize=0',
+    '-ar',
+    '16000',
+    '-ac',
+    '1',
+    output
+  ])
+}
+
 /** Mix two mono tracks into one file for easy human playback. */
 export async function mixTracks(
   micInput: string,

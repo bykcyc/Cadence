@@ -4,15 +4,14 @@ import { IPC } from '@shared/ipc'
 import type { ArtifactStatus, JobKind, Meeting, TranscriptFile, TranscriptSegment } from '@shared/types'
 import { getMeeting, writeMeeting, meetingFolder } from '../meetings'
 import { getSettings } from '../settings'
-import { toMono16kWav } from '../audio/ffmpeg'
+import { toMono16kWav, mixToMono16kWav } from '../audio/ffmpeg'
 import { transcribeAudio, diarizeAudio } from '../ml-manager'
 import {
   assignSpeaker,
-  buildPlainSegments,
   groupTaggedWords,
+  groupWords,
   normalizeDiarSegments,
-  segmentsToText,
-  type Word
+  segmentsToText
 } from '../transcript'
 import { broadcast } from '../broadcast'
 import { log } from '../logger'
@@ -86,67 +85,53 @@ export async function runTranscription(meetingId: string, diarize: boolean): Pro
     progress(meetingId, kind, 'running', mt('job.prepAudio'))
 
     const settings = getSettings()
-    const micFile = meeting.audio.mic
-    const systemFile = meeting.audio.system
+    const { mic, system, mixed } = meeting.audio
+    const language: string | null = meeting.language
 
-    // Resample present tracks to 16 kHz mono.
-    let micWav: string | null = null
-    let systemWav: string | null = null
-    if (micFile) {
-      micWav = join(folder, '_mic16.wav')
-      await toMono16kWav(join(folder, micFile), micWav)
-      temps.push(micWav)
-    }
-    if (systemFile) {
-      systemWav = join(folder, '_system16.wav')
-      await toMono16kWav(join(folder, systemFile), systemWav)
-      temps.push(systemWav)
+    // ONE stream for ASR. Transcription works on a single mixed stream — the whole conversation on
+    // one timeline — rather than per-track. (Per-track me/them only worked with headphones; when the
+    // mic also caught the other side it produced overlapping, out-of-order text. Speaker labels come
+    // from diarization instead.) Prefer the saved mix; else mix the two tracks; else the lone track.
+    const asrWav = join(folder, '_asr16.wav')
+    temps.push(asrWav)
+    if (mixed) {
+      await toMono16kWav(join(folder, mixed), asrWav)
+    } else if (mic && system) {
+      await mixToMono16kWav(join(folder, mic), join(folder, system), asrWav)
+    } else if (mic || system) {
+      await toMono16kWav(join(folder, (mic ?? system) as string), asrWav)
+    } else {
+      throw new Error('meeting has no audio')
     }
 
-    // ASR each track.
-    let micWords: Word[] = []
-    let systemWords: Word[] = []
-    let language: string | null = meeting.language
-    if (micWav) {
-      const msg = mt('job.recognizeMic')
-      progress(meetingId, kind, 'running', msg, 0)
-      const r = await transcribeAudio(micWav, (v) =>
-        progress(meetingId, kind, 'running', msg, v)
-      )
-      micWords = r.words
-    }
-    if (systemWav) {
-      const msg = mt('job.recognizeSystem')
-      progress(meetingId, kind, 'running', msg, 0)
-      const r = await transcribeAudio(systemWav, (v) =>
-        progress(meetingId, kind, 'running', msg, v)
-      )
-      systemWords = r.words
-    }
+    const msg = mt('job.recognize')
+    progress(meetingId, kind, 'running', msg, 0)
+    const r = await transcribeAudio(asrWav, (v) => progress(meetingId, kind, 'running', msg, v))
+    const words = r.words
 
     let segments: TranscriptSegment[]
     const usedSpeakers = new Set<string>()
 
-    if (diarize && systemWav) {
+    if (diarize) {
+      // Separate speakers by voice (pyannote) on the SAME mixed stream → who-said-what.
       // No hard token requirement — once the gated model is cached it loads without one.
-      // If it's missing and not cached, the worker returns a clear token/license error.
       const hfToken = settings.hfToken
       progress(meetingId, kind, 'running', mt('job.diarizing'))
-      const diar = await diarizeAudio(systemWav, hfToken ?? '')
+      const diar = await diarizeAudio(asrWav, hfToken ?? '')
       const { segments: normSegs, speakers } = normalizeDiarSegments(diar.segments)
-      // Interleave mic ('me') + system (per pyannote speaker) words by time → correct turn order.
-      const tagged = [
-        ...micWords.map((w) => ({ ...w, speaker: 'me' })),
-        ...systemWords.map((w) => ({ ...w, speaker: assignSpeaker(w, normSegs) }))
-      ]
-      segments = groupTaggedWords(tagged)
-      if (micWords.length) usedSpeakers.add('me')
-      speakers.forEach((s) => usedSpeakers.add(s))
+      if (speakers.length > 0) {
+        const tagged = words.map((w) => ({ ...w, speaker: assignSpeaker(w, normSegs) }))
+        segments = groupTaggedWords(tagged)
+        speakers.forEach((s) => usedSpeakers.add(s))
+      } else {
+        // Diarization found no speakers — fall back to a single chronological stream.
+        segments = groupWords(words, 'speaker')
+        usedSpeakers.add('speaker')
+      }
     } else {
-      // Plain transcript: auto — clean tracks → interleaved me/them; bleed → one chronological stream.
-      const plain = buildPlainSegments(micWords, systemWords)
-      segments = plain.segments
-      plain.speakers.forEach((s) => usedSpeakers.add(s))
+      // Plain transcript: one chronological stream, single neutral speaker (no false me/them split).
+      segments = groupWords(words, 'speaker')
+      usedSpeakers.add('speaker')
     }
 
     await ensureSpeakerLabels(meetingId, [...usedSpeakers])

@@ -4,6 +4,16 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] — 2026-06-06
+
+### Changed
+- **Transcription now always works on a single mixed stream** — the whole conversation on one
+  timeline — instead of the mic and meeting-audio tracks separately. Splitting by track was only
+  reliable with headphones; when the mic also picked up the other side it produced overlapping,
+  out-of-order text. The plain **Transcript** is now one clean chronological stream. To label who
+  said what, use **By speakers** (diarization), which runs on that same mixed stream. (Recording
+  still keeps the separate mic/meeting tracks — for playback in the audio player.)
+
 ## [0.2.0] — 2026-06-06
 
 ### Fixed
