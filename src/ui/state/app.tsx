@@ -24,7 +24,7 @@ interface AppContextValue {
   refreshMeetings: () => Promise<void>
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>
   toggleRecording: () => Promise<void>
-  runTranscription: (id: string, diarize: boolean) => Promise<void>
+  runTranscription: (id: string, diarize: boolean, numSpeakers?: number) => Promise<void>
   runNotes: (id: string) => Promise<void>
 }
 
@@ -67,9 +67,12 @@ export function AppProvider({ children }: { children: ReactNode }): ReactNode {
   const [jobs, setJobs] = useState<Record<string, JobProgress>>({})
   const [loading, setLoading] = useState(true)
 
-  const runTranscription = useCallback(async (id: string, diarize: boolean) => {
-    await window.api.transcription.run(id, { diarize })
-  }, [])
+  const runTranscription = useCallback(
+    async (id: string, diarize: boolean, numSpeakers?: number) => {
+      await window.api.transcription.run(id, { diarize, numSpeakers })
+    },
+    []
+  )
 
   const runNotes = useCallback(async (id: string) => {
     await window.api.transcription.runNotes(id)

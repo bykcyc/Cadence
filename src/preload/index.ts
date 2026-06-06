@@ -60,7 +60,7 @@ const api = {
     }
   },
   transcription: {
-    run: (id: string, opts: { diarize?: boolean }): Promise<void> =>
+    run: (id: string, opts: { diarize?: boolean; numSpeakers?: number }): Promise<void> =>
       ipcRenderer.invoke(IPC.transcribeRun, id, opts),
     runNotes: (id: string): Promise<void> => ipcRenderer.invoke(IPC.notesRun, id),
     onProgress: (cb: (p: JobProgress) => void): (() => void) => {

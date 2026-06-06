@@ -36,8 +36,10 @@ export function registerIpc(): void {
 
   // ML worker + transcription
   ipcMain.handle(IPC.mlGet, () => getMlState())
-  ipcMain.handle(IPC.transcribeRun, (_e, id: string, opts: { diarize?: boolean }) =>
-    runTranscription(id, !!opts?.diarize)
+  ipcMain.handle(
+    IPC.transcribeRun,
+    (_e, id: string, opts: { diarize?: boolean; numSpeakers?: number }) =>
+      runTranscription(id, !!opts?.diarize, opts?.numSpeakers)
   )
   ipcMain.handle(IPC.notesRun, (_e, id: string) => runNotes(id))
 

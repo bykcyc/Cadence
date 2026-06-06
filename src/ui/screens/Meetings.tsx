@@ -717,6 +717,9 @@ function TranscriptSection({ meeting }: { meeting: Meeting }): ReactNode {
   const [tab, setTab] = useState<'transcript' | 'diarized'>('transcript')
   const [plain, setPlain] = useState<TranscriptFile | null>(null)
   const [diar, setDiar] = useState<TranscriptFile | null>(null)
+  // Speaker count hint for diarization: undefined = Auto (let pyannote decide). With bleed
+  // (mic on speakers picks up the other side) Auto can over-split, so let the user pin the count.
+  const [numSpeakers, setNumSpeakers] = useState<number | undefined>(undefined)
 
   const tA = meeting.artifacts.transcript
   const dA = meeting.artifacts.diarizedTranscript
@@ -762,7 +765,7 @@ function TranscriptSection({ meeting }: { meeting: Meeting }): ReactNode {
             </button>
           ))}
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             variant="primary"
             disabled={tRunning}
@@ -774,13 +777,27 @@ function TranscriptSection({ meeting }: { meeting: Meeting }): ReactNode {
             {tRunning ? <Spinner className="text-white" /> : <FileText className="h-4 w-4" />}
             {tA.status === 'done' ? t('btn.again') : t('btn.transcribe')}
           </Button>
+          <select
+            value={numSpeakers ?? 'auto'}
+            disabled={dRunning}
+            title={t('diar.speakers')}
+            onChange={(e) =>
+              setNumSpeakers(e.target.value === 'auto' ? undefined : Number(e.target.value))
+            }
+            className="rounded-lg border border-neutral-200 bg-white px-2 py-1.5 text-sm text-neutral-700 disabled:opacity-50 dark:border-neutral-700 dark:bg-neutral-800 dark:text-neutral-200"
+          >
+            <option value="auto">{`${t('diar.speakers')}: ${t('diar.auto')}`}</option>
+            {[2, 3, 4, 5, 6].map((n) => (
+              <option key={n} value={n}>{`${t('diar.speakers')}: ${n}`}</option>
+            ))}
+          </select>
           <Button
             variant="secondary"
             disabled={dRunning}
             title={settings?.hfToken ? '' : t('tip.needHfToken')}
             onClick={() => {
               setTab('diarized')
-              void runTranscription(meeting.id, true)
+              void runTranscription(meeting.id, true, numSpeakers)
             }}
           >
             {dRunning ? <Spinner /> : <Users className="h-4 w-4" />}

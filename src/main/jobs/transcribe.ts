@@ -69,7 +69,11 @@ async function ensureSpeakerLabels(meetingId: string, speakers: string[]): Promi
 }
 
 /** Run transcription (and optional diarization) for one meeting. */
-export async function runTranscription(meetingId: string, diarize: boolean): Promise<void> {
+export async function runTranscription(
+  meetingId: string,
+  diarize: boolean,
+  numSpeakers?: number
+): Promise<void> {
   const key = jobKey(meetingId, diarize)
   if (inFlight.has(key)) return
   inFlight.add(key)
@@ -145,7 +149,7 @@ export async function runTranscription(meetingId: string, diarize: boolean): Pro
       if (!asrWav) throw new Error('no audio for diarization')
       const hfToken = settings.hfToken
       progress(meetingId, kind, 'running', mt('job.diarizing'))
-      const diar = await diarizeAudio(asrWav, hfToken ?? '')
+      const diar = await diarizeAudio(asrWav, hfToken ?? '', { numSpeakers })
       const { segments: normSegs, speakers } = normalizeDiarSegments(diar.segments)
       if (speakers.length > 0) {
         const tagged = words.map((w) => ({ ...w, speaker: assignSpeaker(w, normSegs) }))

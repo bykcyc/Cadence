@@ -538,12 +538,14 @@ export function transcribeAudio(
 export function diarizeAudio(
   audioPath: string,
   hfToken: string,
-  opts: { minSpeakers?: number; maxSpeakers?: number } = {}
+  opts: { numSpeakers?: number; minSpeakers?: number; maxSpeakers?: number } = {}
 ): Promise<DiarizeResult> {
-  // Diarization (pyannote) always runs on the NeMo/torch worker — ONNX engine has no diarization.
+  // Diarization (pyannote) runs on the dedicated torch worker — the ONNX engine has none.
+  // num_speakers forces an exact count (set when the user picks one); Auto leaves it unset.
   return postTo<DiarizeResult>(nemoEngine, '/diarize', {
     audio_path: audioPath,
     hf_token: hfToken,
+    num_speakers: opts.numSpeakers,
     min_speakers: opts.minSpeakers,
     max_speakers: opts.maxSpeakers
   })
