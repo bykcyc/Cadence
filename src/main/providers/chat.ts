@@ -1,6 +1,6 @@
 import { getSettings } from '../settings'
 import type { NotesProvider } from '@shared/types'
-import { currentApiKey } from '@shared/notes'
+import { currentApiKey, currentModel } from '@shared/notes'
 import { mt } from '../i18n'
 
 const ENDPOINTS: Record<NotesProvider, string> = {
@@ -19,7 +19,7 @@ export async function chatComplete(
   const s = getSettings()
   const apiKey = currentApiKey(s)
   if (!apiKey) throw new Error(mt('llm.errNoApiKey'))
-  if (!s.notesModel?.trim()) throw new Error(mt('llm.errNoModel'))
+  if (!currentModel(s).trim()) throw new Error(mt('llm.errNoModel'))
   const messages = opts.system
     ? [
         { role: 'system', content: opts.system },
@@ -34,7 +34,7 @@ export async function chatComplete(
       'X-Title': 'Cadence'
     },
     body: JSON.stringify({
-      model: s.notesModel,
+      model: currentModel(s),
       messages,
       temperature: opts.temperature ?? 0.3,
       ...(opts.maxTokens ? { max_tokens: opts.maxTokens } : {}),

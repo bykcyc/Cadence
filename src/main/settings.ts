@@ -34,7 +34,7 @@ export function initSettings(): void {
       // onnxruntime-gpu (~7× faster on long meetings, larger one-time install). Diarization = NeMo.
       asrDevice: 'cpu',
       notesProvider: 'deepseek',
-      notesModel: 'deepseek-v4-flash',
+      notesModels: {},
       notesApiKey: null,
       notesApiKeys: {},
       notesPrompt: DEFAULT_NOTES_PROMPT,
@@ -97,6 +97,18 @@ export function initSettings(): void {
   if (legacyEngine === 'nemo' || legacyEngine === 'onnx') {
     store.set('asrDevice', legacyEngine === 'nemo' ? 'gpu' : 'cpu')
     legacyStore.delete('asrEngine')
+  }
+
+  // Migrate the legacy single notesModel into the per-provider map, then drop it. OpenRouter model
+  // ids look like "vendor/model", so route those to openrouter; everything else to the active
+  // provider. (This unmangles the old bug where switching provider left the wrong model behind.)
+  const legacyModel = legacyStore.get('notesModel')
+  if (typeof legacyModel === 'string' && legacyModel) {
+    if (Object.keys(store.get('notesModels') ?? {}).length === 0) {
+      const target = legacyModel.includes('/') ? 'openrouter' : store.get('notesProvider')
+      store.set('notesModels', { [target]: legacyModel })
+    }
+    legacyStore.delete('notesModel')
   }
 }
 

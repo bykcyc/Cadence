@@ -683,16 +683,21 @@ function speakerColor(speaker: string): string {
 
 function TranscriptView({ file, meeting }: { file: TranscriptFile; meeting: Meeting }): ReactNode {
   const speakers = [...new Set(file.segments.map((s) => s.speaker))]
+  // Single speaker = a one-stream transcript (e.g. bleed) — drop the speaker column entirely.
+  const single = speakers.length <= 1
   return (
     <div>
-      <SpeakerChips meeting={meeting} speakers={speakers} />
-      <div className="space-y-3">
+      {!single && <SpeakerChips meeting={meeting} speakers={speakers} />}
+      {/* Fixed-height, self-scrolling window so a long transcript doesn't grow the whole page. */}
+      <div className="max-h-[55vh] space-y-3 overflow-y-auto pr-1">
         {file.segments.map((seg: TranscriptSegment, i) => (
           <div key={i} className="flex gap-3">
             <div className="w-28 shrink-0 pt-0.5 text-right">
-              <div className="text-xs font-medium" style={{ color: speakerColor(seg.speaker) }}>
-                {meeting.speakers[seg.speaker] ?? seg.speaker}
-              </div>
+              {!single && (
+                <div className="text-xs font-medium" style={{ color: speakerColor(seg.speaker) }}>
+                  {meeting.speakers[seg.speaker] ?? seg.speaker}
+                </div>
+              )}
               <div className="text-[11px] tabular-nums text-neutral-400">
                 {formatDuration(seg.start)}
               </div>

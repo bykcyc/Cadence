@@ -7,9 +7,9 @@ import { getSettings } from '../settings'
 import { toMono16kWav } from '../audio/ffmpeg'
 import { transcribeAudio, diarizeAudio } from '../ml-manager'
 import {
-  groupWords,
-  groupWordsByDiarization,
-  mergeSegments,
+  assignSpeaker,
+  buildPlainSegments,
+  groupTaggedWords,
   normalizeDiarSegments,
   segmentsToText,
   type Word
@@ -49,6 +49,7 @@ async function setArtifact(
 function defaultLabel(speaker: string): string {
   if (speaker === 'me') return mt('speaker.me')
   if (speaker === 'them') return mt('speaker.them')
+  if (speaker === 'speaker') return mt('speaker.one') // single neutral stream (bleed)
   const m = speaker.match(/^spk_(\d+)$/)
   return m ? mt('speaker.n', { n: m[1] }) : speaker
 }
@@ -123,9 +124,8 @@ export async function runTranscription(meetingId: string, diarize: boolean): Pro
       systemWords = r.words
     }
 
-    const micSegments = groupWords(micWords, 'me')
-    let systemSegments: TranscriptSegment[]
-    const usedSpeakers = new Set<string>(['me'])
+    let segments: TranscriptSegment[]
+    const usedSpeakers = new Set<string>()
 
     if (diarize && systemWav) {
       // No hard token requirement — once the gated model is cached it loads without one.
@@ -134,14 +134,21 @@ export async function runTranscription(meetingId: string, diarize: boolean): Pro
       progress(meetingId, kind, 'running', mt('job.diarizing'))
       const diar = await diarizeAudio(systemWav, hfToken ?? '')
       const { segments: normSegs, speakers } = normalizeDiarSegments(diar.segments)
-      systemSegments = groupWordsByDiarization(systemWords, normSegs)
+      // Interleave mic ('me') + system (per pyannote speaker) words by time → correct turn order.
+      const tagged = [
+        ...micWords.map((w) => ({ ...w, speaker: 'me' })),
+        ...systemWords.map((w) => ({ ...w, speaker: assignSpeaker(w, normSegs) }))
+      ]
+      segments = groupTaggedWords(tagged)
+      if (micWords.length) usedSpeakers.add('me')
       speakers.forEach((s) => usedSpeakers.add(s))
     } else {
-      systemSegments = groupWords(systemWords, 'them')
-      if (systemWords.length) usedSpeakers.add('them')
+      // Plain transcript: auto — clean tracks → interleaved me/them; bleed → one chronological stream.
+      const plain = buildPlainSegments(micWords, systemWords)
+      segments = plain.segments
+      plain.speakers.forEach((s) => usedSpeakers.add(s))
     }
 
-    const segments = mergeSegments(micSegments, systemSegments)
     await ensureSpeakerLabels(meetingId, [...usedSpeakers])
 
     const labelsMeeting = await getMeeting(meetingId)

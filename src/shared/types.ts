@@ -68,7 +68,10 @@ export interface AppSettings {
   asrDevice: 'cpu' | 'gpu'
   // Meeting notes (iteration 3).
   notesProvider: NotesProvider
-  notesModel: string
+  // Legacy single model (kept for migration). New code reads notesModels[notesProvider].
+  notesModel?: string
+  // Model stored per provider, so switching DeepSeek/OpenRouter/Mistral keeps each one's model.
+  notesModels: Partial<Record<NotesProvider, string>>
   // Legacy single key (kept for migration). New code reads notesApiKeys[notesProvider].
   notesApiKey: string | null
   // API key stored per provider, so switching DeepSeek/OpenRouter/Mistral keeps each key.

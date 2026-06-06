@@ -4,6 +4,21 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.0] — 2026-06-06
+
+### Fixed
+- **Transcript now reads in the correct order.** Tracks are interleaved turn-by-turn by timestamp
+  instead of shown as two big per-track blocks. And when the mic also picked up the other side
+  (recording on speakers, not headphones — both tracks then contain the whole conversation), the
+  transcript automatically collapses to a single chronological stream instead of a confusing
+  "me answering myself" split. For true speaker separation in that case, use **By speakers**
+  (diarization) or record with headphones.
+- **Long transcripts scroll in a fixed window** (max height) instead of growing the page endlessly.
+- **LLM model is remembered per provider.** Switching DeepSeek ↔ OpenRouter ↔ Mistral no longer
+  leaves the previous provider's model behind — each keeps its own (mirrors the per-provider API keys).
+- **OpenRouter model picker is discoverable.** After *Get models*, the list opens automatically and
+  the field shows a ▾ chevron so it's clear you can click to choose a model.
+
 ## [0.1.9] — 2026-06-05
 
 ### Changed

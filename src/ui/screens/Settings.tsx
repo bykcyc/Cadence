@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { FolderOpen, Activity, Square, Copy, Trash2 } from 'lucide-react'
+import { FolderOpen, Activity, Square, Copy, Trash2, ChevronDown } from 'lucide-react'
 import { useApp } from '../state/app'
 import { Button, Card, Spinner, Toggle } from '../components/ui'
 import { cn } from '../lib/cn'
 import { startLevelMonitor, type LevelMonitor } from '../recorder/monitor'
-import { DEFAULT_NOTES_PROMPT } from '@shared/notes'
+import { DEFAULT_NOTES_PROMPT, DEFAULT_MODELS } from '@shared/notes'
 import { DEFAULT_POLISH_PROMPT } from '@shared/dictation'
 import { LOCALES, TRANSLATE_LANGUAGES } from '@shared/i18n'
 import { DONATE_URL } from '@shared/links'
@@ -348,6 +348,7 @@ export function SettingsScreen(): ReactNode {
     if (res.models) {
       setOrModels(res.models)
       setModelsMsg(t('llm.modelsLoaded', { n: res.models.length }))
+      setModelOpen(true) // auto-open the picker so it's obvious the list is now selectable
     } else {
       setModelsMsg(t('llm.modelsError'))
     }
@@ -492,46 +493,70 @@ export function SettingsScreen(): ReactNode {
             />
           </Row>
           <Row label={t('field.model')}>
-            <div className="relative flex flex-col items-end gap-1.5">
-              <input
-                className={inputClass()}
-                placeholder="deepseek-v4-flash"
-                value={settings.notesModel}
-                onChange={(e) => {
-                  set({ notesModel: e.target.value })
-                  setModelOpen(true)
-                }}
-                onFocus={() => orModels.length > 0 && setModelOpen(true)}
-                onBlur={() => window.setTimeout(() => setModelOpen(false), 150)}
-              />
-              {settings.notesProvider === 'openrouter' &&
-                modelOpen &&
-                orModels.length > 0 &&
-                (() => {
-                  const q = settings.notesModel.toLowerCase()
-                  const matches = orModels.filter((m) => m.toLowerCase().includes(q)).slice(0, 200)
-                  if (matches.length === 0) return null
-                  return (
-                    <div className="absolute right-0 top-full z-20 mt-1 max-h-64 w-64 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-600 dark:bg-neutral-900">
-                      {matches.map((m) => (
-                        <button
-                          key={m}
-                          type="button"
-                          className="block w-full truncate px-2.5 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-700/60"
-                          // onMouseDown (not onClick) + preventDefault: fires before the input's
-                          // onBlur, so the selection registers without the dropdown closing first.
-                          onMouseDown={(e) => {
-                            e.preventDefault()
-                            set({ notesModel: m })
-                            setModelOpen(false)
-                          }}
-                        >
-                          {m}
-                        </button>
-                      ))}
-                    </div>
-                  )
-                })()}
+            <div className="flex flex-col items-end gap-1.5">
+              {/* Model is stored per provider, so switching DeepSeek/OpenRouter/Mistral keeps each
+                  one's model (no more leftover OpenRouter model after switching to DeepSeek). */}
+              {(() => {
+                const provider = settings.notesProvider
+                const isOr = provider === 'openrouter'
+                const modelValue = settings.notesModels?.[provider] ?? DEFAULT_MODELS[provider] ?? ''
+                const setModel = (m: string): void =>
+                  set({ notesModels: { ...settings.notesModels, [provider]: m } })
+                const matches =
+                  isOr && orModels.length > 0
+                    ? orModels.filter((m) => m.toLowerCase().includes(modelValue.toLowerCase())).slice(0, 200)
+                    : []
+                return (
+                  <div className="relative">
+                    <input
+                      className={cn(inputClass(), isOr && orModels.length > 0 && 'pr-8')}
+                      placeholder={DEFAULT_MODELS[provider] || 'model-id'}
+                      value={modelValue}
+                      onChange={(e) => {
+                        setModel(e.target.value)
+                        if (isOr) setModelOpen(true)
+                      }}
+                      onFocus={() => isOr && orModels.length > 0 && setModelOpen(true)}
+                      onBlur={() => window.setTimeout(() => setModelOpen(false), 150)}
+                    />
+                    {isOr && orModels.length > 0 && (
+                      <button
+                        type="button"
+                        aria-label={t('field.getModels')}
+                        className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200"
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          setModelOpen((o) => !o)
+                        }}
+                      >
+                        <ChevronDown
+                          className={cn('h-4 w-4 transition-transform', modelOpen && 'rotate-180')}
+                        />
+                      </button>
+                    )}
+                    {isOr && modelOpen && matches.length > 0 && (
+                      <div className="absolute right-0 top-full z-20 mt-1 max-h-64 w-64 overflow-y-auto rounded-lg border border-neutral-200 bg-white py-1 shadow-lg dark:border-neutral-600 dark:bg-neutral-900">
+                        {matches.map((m) => (
+                          <button
+                            key={m}
+                            type="button"
+                            className="block w-full truncate px-2.5 py-1.5 text-left text-sm text-neutral-700 hover:bg-neutral-100 dark:text-neutral-200 dark:hover:bg-neutral-700/60"
+                            // onMouseDown (not onClick) + preventDefault: fires before the input's
+                            // onBlur, so the selection registers without the dropdown closing first.
+                            onMouseDown={(e) => {
+                              e.preventDefault()
+                              setModel(m)
+                              setModelOpen(false)
+                            }}
+                          >
+                            {m}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
               {settings.notesProvider === 'openrouter' && (
                 <div className="flex items-center gap-2">
                   {modelsMsg && <span className="text-xs text-neutral-500">{modelsMsg}</span>}

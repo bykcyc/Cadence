@@ -6,7 +6,7 @@ import { getMeeting, writeMeeting, meetingFolder, readArtifact } from '../meetin
 import { getSettings } from '../settings'
 import { segmentsToText } from '../transcript'
 import { formatDateTime } from '@shared/datetime'
-import { currentApiKey } from '@shared/notes'
+import { currentApiKey, currentModel } from '@shared/notes'
 import { broadcast } from '../broadcast'
 import { mt } from '../i18n'
 
@@ -36,7 +36,7 @@ export async function runNotes(meetingId: string): Promise<void> {
     if (!apiKey) {
       throw new Error(mt('llm.errNoApiKey'))
     }
-    if (!settings.notesModel?.trim()) {
+    if (!currentModel(settings).trim()) {
       throw new Error(mt('llm.errNoModel'))
     }
 
@@ -73,7 +73,7 @@ export async function runNotes(meetingId: string): Promise<void> {
         'X-Title': 'Cadence'
       },
       body: JSON.stringify({
-        model: settings.notesModel,
+        model: currentModel(settings),
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
         stream: false
@@ -98,7 +98,7 @@ export async function runNotes(meetingId: string): Promise<void> {
       updated.artifacts.notes = {
         status: 'done',
         path: 'notes.md',
-        model: settings.notesModel,
+        model: currentModel(settings),
         completedAt: new Date().toISOString(),
         error: null
       }

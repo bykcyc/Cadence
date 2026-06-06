@@ -1,8 +1,20 @@
-import type { AppSettings } from './types'
+import type { AppSettings, NotesProvider } from './types'
 
 /** The API key for the currently-selected LLM provider (per-provider storage). */
 export function currentApiKey(s: AppSettings): string | null {
   return s.notesApiKeys?.[s.notesProvider] ?? null
+}
+
+/** Sensible default model per provider (OpenRouter has none — the user fetches & picks). */
+export const DEFAULT_MODELS: Record<NotesProvider, string> = {
+  deepseek: 'deepseek-v4-flash',
+  openrouter: '',
+  mistral: 'mistral-large-latest'
+}
+
+/** The model for the currently-selected provider (per-provider storage, with a sensible default). */
+export function currentModel(s: AppSettings): string {
+  return s.notesModels?.[s.notesProvider] ?? DEFAULT_MODELS[s.notesProvider] ?? ''
 }
 
 export const DEFAULT_NOTES_PROMPT = `You are an assistant that writes clear, well-structured notes for a work meeting.

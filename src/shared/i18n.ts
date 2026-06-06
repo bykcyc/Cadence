@@ -328,6 +328,7 @@ const en: Dict = {
   'speaker.me': 'My track',
   'speaker.them': 'Meeting track',
   'speaker.n': 'Speaker {n}',
+  'speaker.one': 'Speaker',
   'dictation.empty': 'Empty',
   'dictation.inClipboard': 'Copied to clipboard',
   'ml.installUv': 'Installing the uv package manager…',
@@ -537,6 +538,7 @@ const ru: Dict = {
   'speaker.me': 'Моя дорожка',
   'speaker.them': 'Дорожка встречи',
   'speaker.n': 'Говорящий {n}',
+  'speaker.one': 'Говорящий',
   'dictation.empty': 'Пусто',
   'dictation.inClipboard': 'В буфере',
   'ml.installUv': 'Установка пакетного менеджера uv…',
@@ -762,7 +764,8 @@ const zh: Dict = {
   'dialog.delete': '删除',
   'speaker.me': '我的音轨',
   'speaker.them': '会议音轨',
-  'speaker.n': '说话人 {n}'
+  'speaker.n': '说话人 {n}',
+  'speaker.one': '说话人',
 }
 
 const es: Dict = {
@@ -967,7 +970,8 @@ const es: Dict = {
   'dialog.delete': 'Eliminar',
   'speaker.me': 'Mi pista',
   'speaker.them': 'Pista de la reunión',
-  'speaker.n': 'Hablante {n}'
+  'speaker.n': 'Hablante {n}',
+  'speaker.one': 'Hablante',
 }
 
 const fr: Dict = {
@@ -1172,7 +1176,8 @@ const fr: Dict = {
   'dialog.delete': 'Supprimer',
   'speaker.me': 'Ma piste',
   'speaker.them': 'Piste de la réunion',
-  'speaker.n': 'Intervenant {n}'
+  'speaker.n': 'Intervenant {n}',
+  'speaker.one': 'Locuteur',
 }
 
 const de: Dict = {
@@ -1377,7 +1382,8 @@ const de: Dict = {
   'dialog.delete': 'Löschen',
   'speaker.me': 'Meine Spur',
   'speaker.them': 'Meeting-Spur',
-  'speaker.n': 'Sprecher {n}'
+  'speaker.n': 'Sprecher {n}',
+  'speaker.one': 'Sprecher',
 }
 
 const pt: Dict = {
@@ -1582,7 +1588,8 @@ const pt: Dict = {
   'dialog.delete': 'Excluir',
   'speaker.me': 'Minha faixa',
   'speaker.them': 'Faixa da reunião',
-  'speaker.n': 'Participante {n}'
+  'speaker.n': 'Participante {n}',
+  'speaker.one': 'Falante',
 }
 
 const it: Dict = {
@@ -1787,7 +1794,8 @@ const it: Dict = {
   'dialog.delete': 'Elimina',
   'speaker.me': 'La mia traccia',
   'speaker.them': 'Traccia della riunione',
-  'speaker.n': 'Interlocutore {n}'
+  'speaker.n': 'Interlocutore {n}',
+  'speaker.one': 'Interlocutore',
 }
 
 const ja: Dict = {
@@ -1991,7 +1999,8 @@ const ja: Dict = {
   'dialog.delete': '削除',
   'speaker.me': '自分のトラック',
   'speaker.them': '会議のトラック',
-  'speaker.n': '話者 {n}'
+  'speaker.n': '話者 {n}',
+  'speaker.one': '話者',
 }
 
 const ko: Dict = {
@@ -2195,7 +2204,8 @@ const ko: Dict = {
   'dialog.delete': '삭제',
   'speaker.me': '내 트랙',
   'speaker.them': '회의 트랙',
-  'speaker.n': '화자 {n}'
+  'speaker.n': '화자 {n}',
+  'speaker.one': '화자',
 }
 
 const ar: Dict = {
@@ -2399,7 +2409,8 @@ const ar: Dict = {
   'dialog.delete': 'حذف',
   'speaker.me': 'مساري',
   'speaker.them': 'مسار الاجتماع',
-  'speaker.n': 'المتحدث {n}'
+  'speaker.n': 'المتحدث {n}',
+  'speaker.one': 'المتحدث',
 }
 
 const hi: Dict = {
@@ -2603,7 +2614,8 @@ const hi: Dict = {
   'dialog.delete': 'हटाएँ',
   'speaker.me': 'मेरा ट्रैक',
   'speaker.them': 'मीटिंग ट्रैक',
-  'speaker.n': 'वक्ता {n}'
+  'speaker.n': 'वक्ता {n}',
+  'speaker.one': 'वक्ता',
 }
 
 const tr: Dict = {
@@ -2808,7 +2820,8 @@ const tr: Dict = {
   'dialog.delete': 'Sil',
   'speaker.me': 'Benim parçam',
   'speaker.them': 'Toplantı parçası',
-  'speaker.n': 'Konuşmacı {n}'
+  'speaker.n': 'Konuşmacı {n}',
+  'speaker.one': 'Konuşmacı',
 }
 
 const pl: Dict = {
@@ -3013,7 +3026,8 @@ const pl: Dict = {
   'dialog.delete': 'Usuń',
   'speaker.me': 'Moja ścieżka',
   'speaker.them': 'Ścieżka spotkania',
-  'speaker.n': 'Mówca {n}'
+  'speaker.n': 'Mówca {n}',
+  'speaker.one': 'Mówca',
 }
 
 export const messages: Record<Locale, Dict> = {

@@ -3,6 +3,9 @@ import {
   groupWords,
   normalizeDiarSegments,
   groupWordsByDiarization,
+  groupTaggedWords,
+  tracksBleed,
+  buildPlainSegments,
   mergeSegments,
   segmentsToText
 } from './transcript'
@@ -57,6 +60,52 @@ describe('groupWordsByDiarization', () => {
     expect(segs).toHaveLength(2)
     expect(segs[0]).toMatchObject({ speaker: 'spk_1', text: 'a b' })
     expect(segs[1]).toMatchObject({ speaker: 'spk_2', text: 'c' })
+  })
+})
+
+describe('groupTaggedWords (turn interleave)', () => {
+  it('interleaves two tracks by time, splitting on speaker change', () => {
+    const segs = groupTaggedWords([
+      { start: 0.0, end: 0.4, word: 'hi', speaker: 'them' },
+      { start: 0.5, end: 0.9, word: 'yo', speaker: 'me' },
+      { start: 1.0, end: 1.4, word: 'sup', speaker: 'them' }
+    ])
+    expect(segs.map((s) => `${s.speaker}:${s.text}`)).toEqual(['them:hi', 'me:yo', 'them:sup'])
+  })
+})
+
+describe('tracksBleed', () => {
+  it('false for clean alternating tracks (no overlap)', () => {
+    const mic = [
+      { start: 0, end: 2, word: 'a' },
+      { start: 6, end: 8, word: 'b' }
+    ]
+    const system = [{ start: 3, end: 5, word: 'c' }]
+    expect(tracksBleed(mic, system)).toBe(false)
+  })
+  it('true when both tracks cover the same span (mic caught both voices)', () => {
+    const mic = [{ start: 0, end: 100, word: 'x' }]
+    const system = [{ start: 0, end: 100, word: 'y' }]
+    expect(tracksBleed(mic, system)).toBe(true)
+  })
+})
+
+describe('buildPlainSegments (auto)', () => {
+  it('clean tracks → interleaved me/them in correct order', () => {
+    const { segments, speakers } = buildPlainSegments(
+      [{ start: 3, end: 4, word: 'mine' }],
+      [{ start: 0, end: 1, word: 'theirs' }]
+    )
+    expect(speakers.sort()).toEqual(['me', 'them'])
+    expect(segments.map((s) => `${s.speaker}:${s.text}`)).toEqual(['them:theirs', 'me:mine'])
+  })
+  it('bleed → one neutral chronological stream', () => {
+    const { segments, speakers } = buildPlainSegments(
+      [{ start: 0, end: 100, word: 'x' }],
+      [{ start: 0, end: 100, word: 'y' }]
+    )
+    expect(speakers).toEqual(['speaker'])
+    expect(segments.every((s) => s.speaker === 'speaker')).toBe(true)
   })
 })
 
