@@ -54,7 +54,7 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: Transcriber
+  shortcutName: Cadence
   artifactName: ${productName}-Setup-${version}.${ext}
 
 portable:

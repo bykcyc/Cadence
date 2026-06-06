@@ -35,11 +35,14 @@ sys.meta_path.insert(0, _BlockNeMo())
 # -------------------------------------------------------------------------------------------
 
 import argparse
+import json
+import queue
 import threading
-from typing import Optional
+from typing import Iterator, Optional
 
 import torch
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import uvicorn
 
@@ -106,6 +109,59 @@ def health():
     return {"status": "ok", "device": DEVICE, "diar_loaded": _diar is not None}
 
 
+# Map pyannote speaker-diarization-3.1 steps → an overall 0..1 progress fraction. Probed call
+# order: segmentation → speaker_counting → embeddings → discrete_diarization; only segmentation
+# and embeddings report numeric completed/total (and completed can briefly exceed total).
+_DIAR_STEP_BASE = {"segmentation": 0.0, "speaker_counting": 0.45, "embeddings": 0.5, "discrete_diarization": 0.95}
+_DIAR_STEP_SPAN = {"segmentation": 0.45, "speaker_counting": 0.0, "embeddings": 0.45, "discrete_diarization": 0.05}
+
+
+def _diarize_stream(pipe, audio_path: str, kwargs: dict) -> Iterator[str]:
+    """Run pyannote in a worker thread while a progress hook feeds a queue, so we can yield NDJSON
+    {"type":"progress","value":0..1} lines LIVE, then a final {"type":"result","data":{segments}}.
+    (A plain accumulate-then-drain would only report progress after the whole run finished.)"""
+    q: "queue.Queue" = queue.Queue()
+    holder: dict = {}
+
+    def hook(step_name, step_artifact=None, file=None, total=None, completed=None):
+        base = _DIAR_STEP_BASE.get(step_name)
+        if base is None:
+            return
+        if total and completed is not None:
+            frac = min(max(completed / total, 0.0), 1.0)
+            q.put(base + _DIAR_STEP_SPAN.get(step_name, 0.0) * frac)
+        else:
+            q.put(base)
+
+    def run():
+        try:
+            with torch.inference_mode():
+                ann = pipe(audio_path, hook=hook, **kwargs)
+            holder["segments"] = [
+                {"start": float(t.start), "end": float(t.end), "speaker": lbl}
+                for t, _, lbl in ann.itertracks(yield_label=True)
+            ]
+        except Exception as e:  # noqa: BLE001
+            holder["error"] = str(e)
+        finally:
+            q.put(None)  # sentinel: work finished
+
+    threading.Thread(target=run, daemon=True).start()
+    last = 0.0
+    while True:
+        val = q.get()
+        if val is None:
+            break
+        if val > last:  # monotonic — never let the bar jump backwards
+            last = val
+            yield json.dumps({"type": "progress", "value": round(val, 4)}) + "\n"
+    if "error" in holder:
+        yield json.dumps({"type": "error", "message": holder["error"]}) + "\n"
+        return
+    yield json.dumps({"type": "progress", "value": 1.0}) + "\n"
+    yield json.dumps({"type": "result", "data": {"segments": holder.get("segments", [])}}) + "\n"
+
+
 @app.post("/diarize")
 def diarize(req: DiarizeReq):
     # No hard token requirement: once the gated model is cached locally it loads without a
@@ -124,13 +180,10 @@ def diarize(req: DiarizeReq):
         kwargs["min_speakers"] = req.min_speakers
     if req.max_speakers:
         kwargs["max_speakers"] = req.max_speakers
-    with torch.inference_mode():
-        annotation = pipe(req.audio_path, **kwargs)
-    segments = [
-        {"start": float(turn.start), "end": float(turn.end), "speaker": label}
-        for turn, _, label in annotation.itertracks(yield_label=True)
-    ]
-    return {"segments": segments}
+    # Stream NDJSON progress like the ONNX /transcribe worker so the UI shows a live %.
+    return StreamingResponse(
+        _diarize_stream(pipe, req.audio_path, kwargs), media_type="application/x-ndjson"
+    )
 
 
 def main():

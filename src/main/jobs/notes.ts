@@ -18,9 +18,14 @@ const PROVIDER_ENDPOINTS: Record<NotesProvider, string> = {
 
 const inFlight = new Set<string>()
 
-function progress(meetingId: string, status: 'running' | 'done' | 'error', message: string): void {
+function progress(
+  meetingId: string,
+  status: 'running' | 'done' | 'error',
+  message: string,
+  percent?: number
+): void {
   const kind: JobKind = 'notes'
-  broadcast(IPC.jobProgressEvent, { meetingId, kind, status, message })
+  broadcast(IPC.jobProgressEvent, { meetingId, kind, status, message, percent })
 }
 
 export async function runNotes(meetingId: string): Promise<void> {
@@ -76,7 +81,7 @@ export async function runNotes(meetingId: string): Promise<void> {
         model: currentModel(settings),
         messages: [{ role: 'user', content: prompt }],
         temperature: 0.3,
-        stream: false
+        stream: true
       }),
       // Long meetings make a big prompt (whole transcript), so allow plenty of time.
       signal: AbortSignal.timeout(600_000)
@@ -86,10 +91,48 @@ export async function runNotes(meetingId: string): Promise<void> {
       const detail = await res.text().catch(() => '')
       throw new Error(`${settings.notesProvider} API ${res.status}: ${detail.slice(0, 300)}`)
     }
-    const data = (await res.json()) as {
-      choices?: { message?: { content?: string } }[]
+    if (!res.body) throw new Error(mt('llm.errEmpty'))
+
+    // Stream the response (OpenAI-style SSE: "data: {json}\n\n" deltas, ending "data: [DONE]").
+    // The output length isn't known up front, so the % is an estimate against a typical notes
+    // length, capped at 95% and snapped to 100% when the stream ends.
+    const ESTIMATED_LEN = 1800
+    const reader = res.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+    let content = ''
+    let streamDone = false
+    while (!streamDone) {
+      const { value, done } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() ?? '' // keep the last, possibly-partial line for the next chunk
+      for (const raw of lines) {
+        const line = raw.trim()
+        if (!line || line.startsWith(':') || !line.startsWith('data:')) continue
+        const payload = line.slice(5).trim()
+        if (payload === '[DONE]') {
+          streamDone = true
+          break
+        }
+        try {
+          const delta = (JSON.parse(payload)?.choices?.[0]?.delta?.content as string) ?? ''
+          if (delta) {
+            content += delta
+            progress(
+              meetingId,
+              'running',
+              mt('notes.generating'),
+              Math.min(content.length / ESTIMATED_LEN, 0.95)
+            )
+          }
+        } catch {
+          /* keep-alive or a JSON object split across chunks — ignore */
+        }
+      }
     }
-    const content = data.choices?.[0]?.message?.content?.trim()
+    content = content.trim()
     if (!content) throw new Error(mt('llm.errEmpty'))
 
     await writeFile(join(folder, 'notes.md'), content, 'utf8')
@@ -106,7 +149,7 @@ export async function runNotes(meetingId: string): Promise<void> {
       await writeMeeting(updated)
     }
     broadcast(IPC.meetingsChangedEvent)
-    progress(meetingId, 'done', mt('job.done'))
+    progress(meetingId, 'done', mt('job.done'), 1)
   } catch (e) {
     let message = e instanceof Error ? e.message : String(e)
     if (e instanceof Error && (e.name === 'TimeoutError' || /abort|timeout/i.test(e.message))) {

@@ -4,6 +4,19 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.6] — 2026-06-07
+
+### Added
+- **Progress bars for "By speakers" and Meeting notes** (like transcription has). Diarization now
+  streams real per-step progress (segmentation → embeddings) as a live %, and notes generation
+  streams the LLM response and shows a moving %. (The notes % is an estimate — an LLM call's final
+  length isn't known up front — so it fills toward ~95% and snaps to 100% when the answer ends.)
+
+### Fixed
+- **Windows shows the app as "Cadence", not "Transcriber".** The Start-menu / search shortcut was
+  still labelled "Transcriber"; it now matches the product name. Settings and downloaded models are
+  untouched — only the display label changed.
+
 ## [0.2.5] — 2026-06-06
 
 ### Added

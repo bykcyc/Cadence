@@ -572,9 +572,24 @@ function NotesSection({ meeting }: { meeting: Meeting }): ReactNode {
       </div>
 
       {running ? (
-        <div className="flex items-center gap-3 py-6 text-sm text-neutral-500">
-          <Spinner />
-          {job?.message ?? t('common.processing')}
+        <div className="py-6">
+          <div className="flex items-center gap-3 text-sm text-neutral-500">
+            <Spinner />
+            <span>{job?.message ?? t('common.processing')}</span>
+            {typeof job?.percent === 'number' && (
+              <span className="ml-auto tabular-nums text-neutral-400">
+                {Math.round(job.percent * 100)}%
+              </span>
+            )}
+          </div>
+          {typeof job?.percent === 'number' && (
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-neutral-200 dark:bg-neutral-700">
+              <div
+                className="h-full rounded-full bg-accent-500 transition-[width] duration-300 ease-out"
+                style={{ width: `${Math.max(2, Math.round(job.percent * 100))}%` }}
+              />
+            </div>
+          )}
         </div>
       ) : n.status === 'error' ? (
         <div className="flex items-start gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-500/10 dark:text-red-300">

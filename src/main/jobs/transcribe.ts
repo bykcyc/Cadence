@@ -148,8 +148,11 @@ export async function runTranscription(
       // No hard token requirement — once the gated model is cached it loads without one.
       if (!asrWav) throw new Error('no audio for diarization')
       const hfToken = settings.hfToken
-      progress(meetingId, kind, 'running', mt('job.diarizing'))
-      const diar = await diarizeAudio(asrWav, hfToken ?? '', { numSpeakers })
+      const dmsg = mt('job.diarizing')
+      progress(meetingId, kind, 'running', dmsg, 0)
+      const diar = await diarizeAudio(asrWav, hfToken ?? '', { numSpeakers }, (v) =>
+        progress(meetingId, kind, 'running', dmsg, v)
+      )
       const { segments: normSegs, speakers } = normalizeDiarSegments(diar.segments)
       if (speakers.length > 0) {
         const tagged = words.map((w) => ({ ...w, speaker: assignSpeaker(w, normSegs) }))
