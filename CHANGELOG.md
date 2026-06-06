@@ -4,6 +4,17 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.4] — 2026-06-06
+
+### Fixed
+- **"By speakers" (diarization) no longer crashes.** On longer meetings it would spin for
+  ~10 minutes and then fail with "fetch failed". Root cause: the diarization worker still
+  imported NVIDIA NeMo at startup — a leftover, since speech recognition moved to ONNX back in
+  0.1.9 — and pyannote transitively pulls NeMo in as well; the torch + NeMo native combination
+  segfaults on Windows (a hard crash, not an out-of-memory or a slow run). The worker no longer
+  touches NeMo at all, so diarization runs cleanly (verified end-to-end: an 84-minute meeting is
+  diarized in ~2.5 min on an 8 GB GPU, peak ~4.3 GB).
+
 ## [0.2.3] — 2026-06-06
 
 ### Fixed
