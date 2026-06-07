@@ -7,6 +7,7 @@ import { startLevelMonitor, type LevelMonitor } from '../recorder/monitor'
 import { DEFAULT_NOTES_PROMPT, DEFAULT_MODELS } from '@shared/notes'
 import { DEFAULT_POLISH_PROMPT } from '@shared/dictation'
 import { LOCALES, TRANSLATE_LANGUAGES } from '@shared/i18n'
+import { TTS_VOICES } from '@shared/tts-voices'
 import { DONATE_URL } from '@shared/links'
 import type {
   AppSettings,
@@ -464,6 +465,27 @@ export function SettingsScreen(): ReactNode {
                   {l.label}
                 </option>
               ))}
+            </select>
+          </Row>
+          <Row label={t('field.ttsVoice')}>
+            <select
+              className={selectClass()}
+              value={settings.ttsVoice}
+              onChange={(e) => set({ ttsVoice: e.target.value })}
+            >
+              <option value="">{t('tts.voiceAuto')}</option>
+              {LOCALES.map((l) => {
+                const voices = TTS_VOICES.filter((v) => v.lang === l.code)
+                return voices.length ? (
+                  <optgroup key={l.code} label={l.label}>
+                    {voices.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null
+              })}
             </select>
           </Row>
           <Row label={t('field.ttsSpeed')}>

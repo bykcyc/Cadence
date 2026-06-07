@@ -4,6 +4,20 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.7] — 2026-06-07
+
+### Changed
+- **Transcripts are split into sentence-sized, time-stamped lines** instead of one giant block for a
+  long continuous monologue. A running utterance now also breaks at a sentence end (once it's a
+  readable length), so you can scan and jump by sentence. No effect on recognition speed — it's only
+  how the recognized words are grouped afterwards.
+
+### Added
+- **Read-aloud voice picker.** Settings → Read-aloud has a new **Voice** dropdown with female/male
+  options per language (e.g. Russian Светлана / Дмитрий / Дарья). "Auto" keeps the per-language
+  default; a chosen voice is used only when it matches the language being spoken (so an English
+  passage is never read by a Russian voice).
+
 ## [0.2.6] — 2026-06-07
 
 ### Added

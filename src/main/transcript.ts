@@ -13,13 +13,23 @@ export interface DiarSeg {
 }
 
 const GAP = 1.2 // seconds of silence that splits an utterance
+// Also break a running utterance at a sentence end once it's at least this long, so a long
+// continuous monologue (no pauses) becomes readable, time-stamped sentence-sized lines instead
+// of one giant block. (Parakeet already punctuates words like "понял." / "начнем?".)
+const SENTENCE_MIN_CHARS = 80
+const SENTENCE_END = /[.!?…]["»)'`]*$/
 
-/** Group a speaker's words into utterances, splitting on long gaps. */
+/** True when `cur` already reads as a long-enough complete sentence and should be closed off. */
+function sentenceBreak(cur: TranscriptSegment): boolean {
+  return cur.text.length >= SENTENCE_MIN_CHARS && SENTENCE_END.test(cur.text)
+}
+
+/** Group a speaker's words into utterances, splitting on long gaps and sentence ends. */
 export function groupWords(words: Word[], speaker: string): TranscriptSegment[] {
   const out: TranscriptSegment[] = []
   let cur: TranscriptSegment | null = null
   for (const w of words) {
-    if (!cur || w.start - cur.end > GAP) {
+    if (!cur || w.start - cur.end > GAP || sentenceBreak(cur)) {
       if (cur) out.push(cur)
       cur = { speaker, start: w.start, end: w.end, text: w.word }
     } else {
@@ -40,7 +50,7 @@ export function groupTaggedWords(words: TaggedWord[]): TranscriptSegment[] {
   const out: TranscriptSegment[] = []
   let cur: TranscriptSegment | null = null
   for (const w of sorted) {
-    if (!cur || cur.speaker !== w.speaker || w.start - cur.end > GAP) {
+    if (!cur || cur.speaker !== w.speaker || w.start - cur.end > GAP || sentenceBreak(cur)) {
       if (cur) out.push(cur)
       cur = { speaker: w.speaker, start: w.start, end: w.end, text: w.word }
     } else {

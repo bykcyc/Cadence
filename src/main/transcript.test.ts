@@ -24,6 +24,36 @@ describe('groupWords', () => {
   it('returns nothing for empty input', () => {
     expect(groupWords([], 'speaker')).toEqual([])
   })
+
+  it('splits a long continuous run at a sentence end (>= ~80 chars)', () => {
+    const words =
+      'This is a fairly long first sentence that should comfortably exceed eighty characters now.'.split(
+        ' '
+      )
+    const n = words.length
+    const all = [
+      ...words.map((w, i) => ({ start: i * 0.3, end: i * 0.3 + 0.25, word: w })),
+      { start: n * 0.3, end: n * 0.3 + 0.25, word: 'Second' },
+      { start: n * 0.3 + 0.3, end: n * 0.3 + 0.55, word: 'sentence.' }
+    ]
+    const segs = groupWords(all, 'speaker')
+    expect(segs).toHaveLength(2)
+    expect(segs[0].text.endsWith('characters now.')).toBe(true)
+    expect(segs[1].text).toBe('Second sentence.')
+  })
+
+  it('keeps short sentences together (does not over-split)', () => {
+    const segs = groupWords(
+      [
+        { start: 0, end: 0.3, word: 'Hi.' },
+        { start: 0.4, end: 0.7, word: 'Yo.' },
+        { start: 0.8, end: 1.1, word: 'Sup.' }
+      ],
+      'speaker'
+    )
+    expect(segs).toHaveLength(1) // all short → one line (under the min length)
+    expect(segs[0].text).toBe('Hi. Yo. Sup.')
+  })
 })
 
 describe('normalizeDiarSegments', () => {

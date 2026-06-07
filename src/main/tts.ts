@@ -66,7 +66,7 @@ async function startTts(): Promise<void> {
     inTxt = join(dir, `in-${stamp}.txt`)
     outMp3 = join(dir, `out-${stamp}.mp3`)
     const s = getSettings()
-    const voice = resolveVoice(s.ttsLang, text) // 'auto' → detect from text; else the chosen language
+    const voice = resolveVoice(s.ttsLang, text, s.ttsVoice) // chosen voice (if it matches the lang), else the language default
     await writeFile(inTxt, text, 'utf8')
 
     await new Promise<void>((resolve) => {
