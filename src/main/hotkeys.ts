@@ -1,6 +1,6 @@
 import { uIOhook, UiohookKey } from 'uiohook-napi'
 import type { HotkeyBinding, HotkeyMode } from '@shared/types'
-import { chordMatches } from './hotkey-match'
+import { isActive } from './hotkey-match'
 import { log } from './logger'
 
 // `kind` is a generic action id: dictation kinds ('plain'|'polish'|'translate') or 'tts'.
@@ -70,22 +70,31 @@ const RIGHT_TO_LEFT: Record<number, number> = {
   [UiohookKey.MetaRight]: UiohookKey.Meta
 }
 
-function exactMatch(keys: number[]): boolean {
-  return chordMatches(pressed, keys, RIGHT_TO_LEFT)
-}
-
 function recompute(): void {
+  const toClear: number[] = []
   for (const { kind, binding } of bindings) {
-    const matched = exactMatch(binding.keys)
     const was = activeKinds.has(kind)
+    // Activate only on an EXACT chord, but once active stay active while the chord keys are held —
+    // so pressing unrelated keys can't toggle it. (With the old exact-only check, a missed global
+    // key-up left a modifier "stuck", and then every other keystroke toggled the match → a storm
+    // of start/stop dictation cycles.)
+    const matched = isActive(was, pressed, binding.keys, RIGHT_TO_LEFT)
     if (matched && !was) {
       activeKinds.add(kind)
       log('info', 'hotkey activate:', kind, `(${labelForKeys(binding.keys)})`)
       handlers.onActivate(kind, binding.mode)
     } else if (!matched && was) {
       activeKinds.delete(kind)
+      // Self-heal a stuck hotkey: a chord key was released, so force-drop the whole chord from
+      // `pressed`. If the partner key's key-up was missed (the usual cause of a stuck dictation),
+      // this clears it so the next press starts clean instead of finding the key "already down".
+      toClear.push(...binding.keys)
       handlers.onDeactivate(kind, binding.mode)
     }
+  }
+  for (const code of toClear) {
+    pressed.delete(code)
+    for (const r in RIGHT_TO_LEFT) if (RIGHT_TO_LEFT[r] === code) pressed.delete(Number(r))
   }
 }
 

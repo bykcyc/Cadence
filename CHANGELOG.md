@@ -4,6 +4,16 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.8] — 2026-06-09
+
+### Fixed
+- **Dictation hotkey could get "stuck" and then fire on every keystroke.** If a global key-up was
+  missed while holding the dictation hotkey (e.g. Ctrl+Space), the key stayed "pressed", and then
+  any other key (Backspace, etc.) flipped the chord match — starting and stopping a dictation cycle
+  on every keystroke (a burst of empty results). The hotkey now stays active only while its keys are
+  actually held (extra keys are ignored instead of toggling it), and releasing the chord force-clears
+  any stuck key so the next press starts clean.
+
 ## [0.2.7] — 2026-06-07
 
 ### Changed
