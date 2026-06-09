@@ -21,8 +21,9 @@ let state: DictationState = { phase: 'idle', kind: null, message: '' }
 let registered = false
 
 // Safety net: if a recording never receives its stop (e.g. a missed global key-up on a
-// very long hold), auto-finalize it instead of hanging forever.
-const MAX_RECORDING_MS = 120_000
+// very long hold), auto-finalize it instead of hanging forever. 5 min so genuinely long
+// dictation isn't cut off mid-sentence (the ONNX worker chunks long audio internally).
+const MAX_RECORDING_MS = 300_000
 
 function setState(patch: Partial<DictationState>): void {
   state = { ...state, ...patch }
@@ -82,11 +83,13 @@ async function handleAudio(buffer: ArrayBuffer): Promise<void> {
     const result = await transcribeAudio(wav)
     let text = (result.text || '').trim()
     log('info', `dictation: kind=${kind} recognized ${text.length} chars`)
+    let degraded: string | null = null
     if (text && (kind === 'polish' || kind === 'translate')) {
       setState({ phase: 'processing' })
       // DeepSeek post-processing is an enhancement. If it errors (no/invalid key, empty
       // response, timeout) we fall back to the raw transcript so the hotkey always inserts
-      // *something* instead of showing an error.
+      // *something* — but we now surface WHY (e.g. "no API key") instead of silently inserting
+      // the rough raw text, which looked like the AI just did a bad job.
       try {
         const out = (
           kind === 'translate'
@@ -94,12 +97,16 @@ async function handleAudio(buffer: ArrayBuffer): Promise<void> {
             : await runPolish(text)
         ).trim()
         if (out) text = out
-        else log('warn', `dictation: ${kind} returned empty — using raw transcript`)
+        else {
+          degraded = mt('llm.errEmpty')
+          log('warn', `dictation: ${kind} returned empty — using raw transcript`)
+        }
       } catch (e) {
-        log('warn', `dictation: ${kind} failed — using raw transcript:`, e instanceof Error ? e.message : String(e))
+        degraded = e instanceof Error ? e.message : String(e)
+        log('warn', `dictation: ${kind} failed — using raw transcript:`, degraded)
       }
     }
-    await finish(text, kind)
+    await finish(text, kind, degraded)
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e)
     log('error', 'dictation failed:', message)
@@ -110,7 +117,7 @@ async function handleAudio(buffer: ArrayBuffer): Promise<void> {
   }
 }
 
-async function finish(text: string, kind: DictationKind): Promise<void> {
+async function finish(text: string, kind: DictationKind, degraded: string | null = null): Promise<void> {
   if (!text) {
     setState({ phase: 'done', message: mt('dictation.empty') })
     setTimeout(endSession, 900)
@@ -124,11 +131,18 @@ async function finish(text: string, kind: DictationKind): Promise<void> {
   } else {
     copyToClipboard(text)
   }
-  setState({
-    phase: 'done',
-    message: settings.dictationOutput === 'clipboard' ? mt('dictation.inClipboard') : ''
-  })
-  setTimeout(endSession, 900)
+  if (degraded) {
+    // The (raw) text WAS inserted, but AI polish/translate didn't run — show the reason (e.g.
+    // "no API key") with the alert state so it's clear why the text wasn't improved.
+    setState({ phase: 'error', message: degraded })
+    setTimeout(endSession, 2600)
+  } else {
+    setState({
+      phase: 'done',
+      message: settings.dictationOutput === 'clipboard' ? mt('dictation.inClipboard') : ''
+    })
+    setTimeout(endSession, 900)
+  }
 }
 
 export function applyDictationBindings(): void {

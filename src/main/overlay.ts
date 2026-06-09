@@ -4,8 +4,10 @@ import { is } from '@electron-toolkit/utils'
 import { IPC } from '@shared/ipc'
 import type { DictationState } from '@shared/types'
 import { getSettings } from './settings'
+import { log } from './logger'
 
 let overlay: BrowserWindow | null = null
+let lastState: DictationState = { phase: 'idle', kind: null, message: '' }
 // Large enough that the icon's expanding halo radiates fully without being clipped
 // by the window edge. The icon is centered inside; the rest is transparent + click-through.
 const WIDTH = 200
@@ -61,9 +63,15 @@ export function createOverlay(): void {
   } else {
     overlay.loadFile(join(__dirname, '../renderer/index.html'), { hash: 'overlay' })
   }
+  // If the renderer finishes (re)loading after a state was already pushed, re-send it so the
+  // overlay can never end up shown-but-blank due to a send-before-load race.
+  overlay.webContents.on('did-finish-load', () => {
+    if (lastState.phase !== 'idle') overlay?.webContents.send(IPC.dictationStateEvent, lastState)
+  })
 }
 
 function send(state: DictationState): void {
+  lastState = state
   if (overlay && !overlay.isDestroyed()) overlay.webContents.send(IPC.dictationStateEvent, state)
 }
 
@@ -78,6 +86,10 @@ export function showOverlay(state: DictationState): void {
   overlay!.setOpacity(getSettings().overlayOpacity)
   overlay!.showInactive()
   send(state)
+  // Diagnostic: confirms the overlay is actually shown and where (on-screen?). If the popup
+  // ever "doesn't appear", this line tells us whether show ran + the window's bounds/visibility.
+  const b = overlay!.getBounds()
+  log('info', `overlay show: phase=${state.phase} visible=${overlay!.isVisible()} bounds=${b.x},${b.y} ${b.width}x${b.height} opacity=${getSettings().overlayOpacity}`)
 }
 
 export function updateOverlay(state: DictationState): void {

@@ -4,6 +4,19 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.9] — 2026-06-09
+
+### Fixed
+- **Dictation now tells you when AI polish/translate was skipped.** With no LLM API key set (or if
+  the call fails), dictation falls back to the raw recognized text — but it used to do so silently,
+  so the result looked like the AI had just done a poor job. It now shows an alert with the reason
+  (e.g. "No API key — Settings → LLM provider"). **Set an API key to actually get polished output.**
+
+### Changed
+- **Longer dictation limit (2 → 5 min)** so a long hold isn't auto-cut mid-sentence.
+- **Read-aloud/dictation overlay** is more resilient — it re-syncs its state if the overlay window
+  reloads, and now logs its show + on-screen position to help diagnose a missing popup.
+
 ## [0.2.8] — 2026-06-09
 
 ### Fixed
