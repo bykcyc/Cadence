@@ -594,20 +594,29 @@ export function SettingsScreen(): ReactNode {
             </div>
           </Row>
           <Row label={t('field.apiKey')}>
-            <input
-              type="password"
-              className={inputClass()}
-              placeholder={t('placeholder.providerKey')}
-              value={settings.notesApiKeys?.[settings.notesProvider] ?? ''}
-              onChange={(e) =>
-                set({
-                  notesApiKeys: {
-                    ...settings.notesApiKeys,
-                    [settings.notesProvider]: e.target.value || undefined
-                  }
-                })
-              }
-            />
+            <div className="flex flex-col items-end gap-1">
+              <input
+                type="password"
+                className={inputClass()}
+                placeholder={t('placeholder.providerKey')}
+                value={settings.notesApiKeys?.[settings.notesProvider] ?? ''}
+                onChange={(e) =>
+                  set({
+                    notesApiKeys: {
+                      ...settings.notesApiKeys,
+                      // Trim: a key pasted from a web page often carries a stray space/newline,
+                      // which the provider then rejects as invalid (401).
+                      [settings.notesProvider]: e.target.value.trim() || undefined
+                    }
+                  })
+                }
+              />
+              {settings.notesApiKeys?.[settings.notesProvider]?.trim() && (
+                <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                  ✓ {t('field.keySaved')}
+                </span>
+              )}
+            </div>
           </Row>
         </Section>
 

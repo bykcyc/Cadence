@@ -4,6 +4,18 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.10] — 2026-06-10
+
+### Added
+- **"✓ Saved" indicator next to the API key.** The key field saves automatically as you type (there
+  is no Save button by design) — a green "✓ Saved" now appears whenever a key is stored, so you can
+  be sure it persisted.
+
+### Fixed
+- **API keys are trimmed.** A key pasted from a web page often carries a trailing space or newline,
+  which the provider then rejects as "invalid" (HTTP 401). Keys are now trimmed both on input and
+  when sent, so a stray space no longer breaks meeting notes / dictation polish.
+
 ## [0.2.9] — 2026-06-09
 
 ### Fixed

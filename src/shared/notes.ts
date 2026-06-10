@@ -1,8 +1,10 @@
 import type { AppSettings, NotesProvider } from './types'
 
-/** The API key for the currently-selected LLM provider (per-provider storage). */
+/** The API key for the currently-selected LLM provider (per-provider storage). Trimmed, because a
+ *  key pasted from a web page often carries a stray space/newline, which the provider rejects (401). */
 export function currentApiKey(s: AppSettings): string | null {
-  return s.notesApiKeys?.[s.notesProvider] ?? null
+  const key = s.notesApiKeys?.[s.notesProvider]?.trim()
+  return key ? key : null
 }
 
 /** Sensible default model per provider (OpenRouter has none — the user fetches & picks). */
