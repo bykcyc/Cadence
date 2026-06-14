@@ -2,6 +2,11 @@ appId: com.cadence.app
 productName: Cadence
 copyright: Copyright © 2026
 
+# Don't rebuild native modules from source. The only native dep, uiohook-napi, is N-API
+# (ABI-stable) and ships a win32-x64 prebuilt, so we use that instead of running node-gyp —
+# which needs Visual Studio and broke CI when GitHub's windows-latest image dropped it.
+npmRebuild: false
+
 directories:
   output: dist
   buildResources: build

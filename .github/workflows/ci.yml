@@ -34,8 +34,10 @@ jobs:
         with:
           node-version: 20
           cache: npm
-      # electron-builder rebuilds the native uiohook-napi module with node-gyp, which needs
-      # distutils — removed from Python 3.12 (the runner default). Pin 3.11 so the rebuild works.
+      # No native rebuild: uiohook-napi is N-API and ships a win32-x64 prebuilt, which
+      # electron-builder uses via `npmRebuild: false` — so no node-gyp / Visual Studio / Python is
+      # needed to build (windows-latest dropping VS used to break this). Python kept as a harmless
+      # safety net for any tooling.
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
