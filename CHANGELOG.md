@@ -4,6 +4,17 @@ All notable changes to **Cadence** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.11] — 2026-06-10
+
+### Added
+- **Noise suppression before recognition (optional).** A new **Noise suppression** toggle in
+  Settings → Recording cleans background noise from the audio before speech recognition — for
+  **dictation** and **meeting transcription** (diarization still runs on the raw audio, since
+  denoising can blur speaker cues). It uses **DPDFNet** (DeepFilterNet2 + dual-path RNN), an ONNX
+  model that runs **on the CPU** (no GPU, no PyTorch); it's set up on first use. **Off by default**:
+  it helps in noisy rooms but has little effect on already-clean audio (e.g. digital calls), and
+  adds processing time on long meetings (~5× realtime on CPU). Apache-2.0 licensed.
+
 ## [0.2.10] — 2026-06-10
 
 ### Added

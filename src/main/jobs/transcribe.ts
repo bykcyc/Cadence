@@ -6,7 +6,7 @@ import type { ArtifactStatus, JobKind, Meeting, TranscriptFile, TranscriptSegmen
 import { getMeeting, writeMeeting, meetingFolder } from '../meetings'
 import { getSettings } from '../settings'
 import { toMono16kWav, mixToMono16kWav } from '../audio/ffmpeg'
-import { transcribeAudio, diarizeAudio } from '../ml-manager'
+import { transcribeAudio, diarizeAudio, denoiseAudio } from '../ml-manager'
 import {
   assignSpeaker,
   groupTaggedWords,
@@ -131,11 +131,23 @@ export async function runTranscription(
     if (cachedWords) {
       words = cachedWords
     } else {
+      let asrInput = asrWav as string
+      if (settings.denoiseEnabled) {
+        // Clean background noise before recognition (DPDFNet, CPU). Diarization below still uses
+        // the RAW asrWav — denoising can strip speaker cues. Fall back to raw on any error.
+        progress(meetingId, kind, 'running', mt('job.denoising'))
+        const enh = join(folder, '_asr16.enh.wav')
+        temps.push(enh)
+        try {
+          await denoiseAudio(asrInput, enh)
+          asrInput = enh
+        } catch (e) {
+          log('warn', 'denoise failed — using raw audio:', e instanceof Error ? e.message : String(e))
+        }
+      }
       const msg = mt('job.recognize')
       progress(meetingId, kind, 'running', msg, 0)
-      const r = await transcribeAudio(asrWav as string, (v) =>
-        progress(meetingId, kind, 'running', msg, v)
-      )
+      const r = await transcribeAudio(asrInput, (v) => progress(meetingId, kind, 'running', msg, v))
       words = r.words
       await writeFile(wordsCache, JSON.stringify({ v: 1, words }), 'utf8').catch(() => {})
     }

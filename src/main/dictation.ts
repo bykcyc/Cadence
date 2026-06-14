@@ -6,7 +6,7 @@ import type { DictationKind, DictationState, HotkeyBinding } from '@shared/types
 import { startHotkeys, setBindings, stopHotkeys } from './hotkeys'
 import { getMainWindow } from './windows'
 import { getSettings } from './settings'
-import { transcribeAudio, ensureOnnxReady } from './ml-manager'
+import { transcribeAudio, ensureOnnxReady, denoiseAudio } from './ml-manager'
 import { showOverlay, updateOverlay, hideOverlay, createOverlay, sendOverlayLevel } from './overlay'
 import { insertText, copyToClipboard } from './inject'
 import { addHistory } from './dictation-history'
@@ -78,9 +78,21 @@ async function handleAudio(buffer: ArrayBuffer): Promise<void> {
   await mkdir(dir, { recursive: true })
   const wav = join(dir, `dictation-${Date.now()}.wav`)
   await writeFile(wav, Buffer.from(buffer))
+  let enh: string | null = null
   try {
     setState({ phase: 'transcribing' })
-    const result = await transcribeAudio(wav)
+    let asrInput = wav
+    if (getSettings().denoiseEnabled) {
+      // Clean room noise before recognition (DPDFNet, CPU). Fall back to raw on any error.
+      enh = wav.replace(/\.wav$/, '.enh.wav')
+      try {
+        await denoiseAudio(wav, enh)
+        asrInput = enh
+      } catch (e) {
+        log('warn', 'dictation: denoise failed — using raw:', e instanceof Error ? e.message : String(e))
+      }
+    }
+    const result = await transcribeAudio(asrInput)
     let text = (result.text || '').trim()
     log('info', `dictation: kind=${kind} recognized ${text.length} chars`)
     let degraded: string | null = null
@@ -114,6 +126,7 @@ async function handleAudio(buffer: ArrayBuffer): Promise<void> {
     setTimeout(endSession, 2800)
   } finally {
     await rm(wav, { force: true }).catch(() => {})
+    if (enh) await rm(enh, { force: true }).catch(() => {})
   }
 }
 

@@ -33,6 +33,7 @@ export function initSettings(): void {
       // ASR device: 'cpu' is the lightweight default (ONNX, no GPU/PyTorch). 'gpu' uses
       // onnxruntime-gpu (~7× faster on long meetings, larger one-time install). Diarization = NeMo.
       asrDevice: 'cpu',
+      denoiseEnabled: false, // DPDFNet speech enhancement before ASR (opt-in)
       notesProvider: 'deepseek',
       notesModels: {},
       notesApiKey: null,

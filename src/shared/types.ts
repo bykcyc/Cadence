@@ -66,6 +66,9 @@ export interface AppSettings {
   // ASR device for the ONNX Parakeet engine: 'cpu' (lightweight default, no GPU) or
   // 'gpu' (onnxruntime-gpu + CUDA, ~7x faster on long meetings, larger one-time install).
   asrDevice: 'cpu' | 'gpu'
+  // Speech enhancement (DPDFNet, ONNX/CPU) applied before recognition — for dictation and meeting
+  // transcription (NOT diarization). Off by default; helps in noisy rooms, no effect on clean audio.
+  denoiseEnabled: boolean
   // Meeting notes (iteration 3).
   notesProvider: NotesProvider
   // Legacy single model (kept for migration). New code reads notesModels[notesProvider].

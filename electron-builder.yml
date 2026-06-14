@@ -28,6 +28,7 @@ extraResources:
     filter:
       - worker.py
       - onnx_worker.py
+      - denoise.py
       - requirements.txt
   # Tray + window icons loaded by absolute path at runtime.
   - from: resources/tray-idle.png

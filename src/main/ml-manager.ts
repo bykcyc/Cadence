@@ -48,6 +48,10 @@ function onnxWorkerScript(): string {
   return join(mlSrcDir(), 'onnx_worker.py')
 }
 
+function denoiseScript(): string {
+  return join(mlSrcDir(), 'denoise.py')
+}
+
 function requirementsFile(): string {
   return join(mlSrcDir(), 'requirements.txt')
 }
@@ -197,6 +201,40 @@ export function ensureTtsPython(): Promise<string> {
     ttsPyPromise = null
   })
   return ttsPyPromise
+}
+
+function denoiseVenvDir(): string {
+  return join(app.getPath('userData'), 'denoise-venv')
+}
+
+let denoisePyPromise: Promise<string> | null = null
+
+/** A Python interpreter with `dpdfnet` (DPDFNet speech enhancement — ONNX on CPU, no torch). A
+ *  tiny dedicated venv, created on first use; the in-flight promise guards against a concurrent
+ *  create/install race. The model itself is fetched from Hugging Face on the first enhance. */
+export function ensureDenoisePython(): Promise<string> {
+  if (denoisePyPromise) return denoisePyPromise
+  denoisePyPromise = (async () => {
+    const venv = denoiseVenvDir()
+    const py = join(venv, 'Scripts', 'python.exe')
+    if (existsSync(py) && (await canImport(py, 'dpdfnet'))) return py
+    const uv = await ensureUv(true) // silent: don't touch the heavy ML banner
+    await run(uv, ['venv', '--python', '3.12', venv], () => {})
+    await run(uv, ['pip', 'install', '--python', py, 'dpdfnet', 'soundfile'], () => {})
+    return py
+  })()
+  denoisePyPromise.catch(() => {
+    denoisePyPromise = null
+  })
+  return denoisePyPromise
+}
+
+/** Speech enhancement (DPDFNet, ONNX/CPU) as a one-shot file→file step run before ASR. Input is a
+ *  16 kHz mono WAV; writes the cleaned 16 kHz mono WAV to `outputWav`. Throws if it fails (callers
+ *  fall back to the raw audio so recognition still runs). */
+export async function denoiseAudio(inputWav: string, outputWav: string): Promise<void> {
+  const py = await ensureDenoisePython()
+  await run(py, [denoiseScript(), inputWav, outputWav], () => {})
 }
 
 function onnxVenvDir(device: OnnxDevice): string {

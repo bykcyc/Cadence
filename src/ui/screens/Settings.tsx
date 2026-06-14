@@ -430,6 +430,12 @@ export function SettingsScreen(): ReactNode {
               ]}
             />
           </Row>
+          <Row label={t('field.denoise')} hint={t('denoise.hint')}>
+            <Toggle
+              checked={settings.denoiseEnabled}
+              onChange={(v) => set({ denoiseEnabled: v })}
+            />
+          </Row>
           {monitoring && (
             <div className="space-y-2 px-5 py-4">
               <LevelBar label={t('level.mic')} value={levels.mic} />
